@@ -1,0 +1,28 @@
+{
+  "assets": [
+    {
+      "path": "tesseract/chi_tra.traineddata.gz",
+      "url": "https://raw.githubusercontent.com/naptha/tessdata/806cd9adc8c6e8abc11c782db1818c990576bebc/4.0.0_fast/chi_tra.traineddata.gz",
+      "sha256": "542b2aecc8e4a3b760694301381543d76bdcd8afdf6d899fb03381801b5e2b47",
+      "bytes": 1667198
+    },
+    {
+      "path": "tesseract/eng.traineddata.gz",
+      "url": "https://raw.githubusercontent.com/naptha/tessdata/806cd9adc8c6e8abc11c782db1818c990576bebc/4.0.0_fast/eng.traineddata.gz",
+      "sha256": "18c1ac52b75e35d44735fb6c2a60acfaf23033524653200738e98f0243edb75b",
+      "bytes": 1984273
+    },
+    {
+      "path": "paddle/PP-OCRv5_mobile_det.tar",
+      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_det_onnx_infer.tar",
+      "sha256": "781056046c9ed77a15c94681605db6a0f62317c2e9cce6931c71da2478d4bc30",
+      "bytes": 4843520
+    },
+    {
+      "path": "paddle/PP-OCRv5_mobile_rec.tar",
+      "url": "https://paddle-model-ecology.bj.bcebos.com/paddlex/official_inference_model/paddle3.0.0/PP-OCRv5_mobile_rec_onnx_infer.tar",
+      "sha256": "f7e792bc836f36e7ef895ad47c426d75b0b75b1650caa6d63fe9418441ffba8c",
+      "bytes": 16701440
+    }
+  ]
+}

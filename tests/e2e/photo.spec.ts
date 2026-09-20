@@ -1,0 +1,100 @@
+import { expect, test } from '@playwright/test';
+import path from 'node:path';
+import { writeFile } from 'node:fs/promises';
+
+const menu = path.resolve('tests/fixtures/menu-clean.png');
+for (const engine of ['tesseract', 'paddle']) {
+  test(engine + ' reads a photo locally, reuses its worker without network, and records usability', async ({ page, context }) => {
+    test.setTimeout(120_000);
+    const requests: { url: string; method: string; hasBody: boolean }[] = [];
+    const responses: { url: string; bytes: number; encoding: string | null }[] = [];
+    const pageErrors: string[] = [];
+    context.on('request', request => {
+      if (request.url().startsWith('http')) requests.push({ url: request.url(), method: request.method(), hasBody: request.postData() !== null });
+    });
+    context.on('response', response => {
+      const headers = response.headers();
+      responses.push({ url: response.url(), bytes: Number(headers['content-length'] ?? 0), encoding: headers['content-encoding'] ?? null });
+    });
+    page.on('pageerror', error => pageErrors.push(error.message));
+    await page.goto('/');
+    expect(requests.some(request => /ocr\/|ocr.worker|opencv/.test(request.url))).toBe(false);
+    await page.getByRole('button', { name: 'Read a photo', exact: true }).click({ timeout: 5000 });
+    await page.getByLabel('Reader to try').selectOption(engine);
+    const picker = page.getByLabel('Choose an image', { exact: true });
+    await picker.setInputFiles(menu);
+    const reading = page.getByRole('region', { name: 'Photo reading' });
+    await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 90_000 });
+    await expect(reading.getByText('min6', { exact: true })).toBeVisible();
+    expect(requests.every(request => request.method === 'GET' && !request.hasBody && new URL(request.url).origin === 'http://127.0.0.1:4173')).toBe(true);
+    expect(engine === 'paddle' ? requests.some(request => request.url.includes('jsep.wasm')) : requests.some(request => request.url.includes('chi_tra.traineddata.gz'))).toBe(true);
+    await writeFile(test.info().outputPath('network.json'), JSON.stringify({ engine, browser: test.info().project.name, responses }, null, 2));
+    await page.screenshot({ path: test.info().outputPath('photo-reading.png'), fullPage: true });
+    // Windows WebKit's offline emulation blocks even File.arrayBuffer(). Block HTTP at its boundary instead.
+    await context.route(url => ['http:', 'https:'].includes(url.protocol), route => route.abort('internetdisconnected'));
+    const requestCount = requests.length;
+    await picker.setInputFiles(menu);
+    await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 30_000 });
+    await page.getByText('Scan details', { exact: true }).click();
+    await expect(page.getByText(/already loaded/)).toBeVisible();
+    expect(requests).toHaveLength(requestCount);
+    await page.getByRole('button', { name: 'This reading is usable' }).click();
+    await expect(page.getByText(/Usable after/)).toBeVisible();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+    expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
+    await page.getByRole('button', { name: 'Start a new trial' }).click();
+    await expect(reading).toHaveCount(0);
+    await expect(page.getByRole('img', { name: 'Selected photo prepared for reading' })).toHaveCount(0);
+    expect(pageErrors).toEqual([]);
+  });
+}
+
+test('cancel during model initialization stops the worker and permits another photo', async ({ page, context }) => {
+  test.setTimeout(90_000);
+  let started = false;
+  let release!: () => void;
+  const paused = new Promise<void>(resolve => { release = resolve; });
+  await context.route('**/ocr/tesseract/*.traineddata.gz', async route => {
+    started = true;
+    await paused;
+    await route.continue().catch(() => {});
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
+  const picker = page.getByLabel('Choose an image', { exact: true });
+  await picker.setInputFiles(menu);
+  await expect.poll(() => started).toBe(true);
+  await page.getByRole('button', { name: 'Cancel reading' }).click();
+  await expect(page.getByText('Reading canceled. You can choose another photo.')).toBeVisible();
+  await expect.poll(() => page.workers().length).toBe(0);
+  release();
+  await context.unroute('**/ocr/tesseract/*.traineddata.gz');
+  await picker.setInputFiles(menu);
+  await expect(page.getByRole('region', { name: 'Photo reading' }).getByText('ngau4', { exact: true })).toBeVisible({ timeout: 45_000 });
+  await page.getByRole('button', { name: 'Read text', exact: true }).click();
+  await expect.poll(() => page.workers().length).toBe(0);
+});
+
+test('an unreadable image reports a recoverable error without starting OCR', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
+  await page.getByLabel('Choose an image', { exact: true }).setInputFiles({
+    name: 'broken.heic', mimeType: 'image/heic', buffer: Buffer.from('This is not a decodable image'),
+  });
+  await expect(page.getByRole('alert')).toContainText('This image could not be opened.');
+  expect(page.workers()).toHaveLength(0);
+  await expect(page.getByLabel('Choose an image', { exact: true })).toBeEnabled();
+});
+
+
+test('honors JPEG orientation when preparing the photo', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
+  await page.getByLabel('Choose an image', { exact: true }).setInputFiles(path.resolve('tests/fixtures/orientation-6.jpg'));
+  const preview = page.getByRole('img', { name: 'Selected photo prepared for reading' });
+  await expect(preview).toBeVisible();
+  expect(await preview.evaluate(image => ({ width: (image as HTMLImageElement).naturalWidth, height: (image as HTMLImageElement).naturalHeight }))).toEqual({ width: 300, height: 600 });
+  await page.getByRole('button', { name: 'Start a new trial' }).click();
+  await expect(preview).toHaveCount(0);
+});
+
