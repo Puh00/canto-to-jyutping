@@ -2,7 +2,7 @@
 
 A static Cantonese reading tool for people who speak the language and want help reading Chinese characters. Paste traditional Chinese or try a photo to see Jyutping beneath each character. Tap an underlined reading to inspect alternatives.
 
-Built with React, TypeScript, Vite, CSS Modules and ToJyutping. The photo trial compares Tesseract.js with official PaddleOCR.js. Conversion uses a bundled dictionary on the device. The app has no backend, analytics, account, or stored input. Loading the site initially requires a connection; guaranteed offline loading is deferred.
+Built with React, TypeScript, Vite, CSS Modules and ToJyutping. The photo reader defaults to official PaddleOCR.js, with Tesseract.js available for comparison. Conversion uses a bundled dictionary on the device. The app has no backend, analytics, account, or stored input. Loading the site initially requires a connection; guaranteed offline loading is deferred.
 
 ## Run locally
 

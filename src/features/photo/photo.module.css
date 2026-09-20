@@ -16,9 +16,6 @@
 .status:empty { display: none; }
 .error { color: #9a3e25; }
 .controls progress { width: 100%; accent-color: var(--green); }
-.preview { margin: 0; text-align: center; padding: 16px; border-radius: 14px; background: #e9ede3; }
-.preview img { display: block; max-width: 100%; max-height: 330px; height: auto; margin: auto; object-fit: contain; border-radius: 5px; }
-.preview figcaption { color: var(--muted); font-size: 12px; margin-top: 12px; }
 .reading h2 { margin: 0 0 20px; font-size: 16px; }
 .hint { color: var(--muted); }
 .trial { font-size: 13px; line-height: 1.7; }
@@ -35,3 +32,6 @@
   .picker { padding: 10px 14px; }
   .engine span { flex-basis: 100%; }
 }
+
+.areaActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
+.photo button:disabled { opacity: .55; cursor: default; }

@@ -23,6 +23,7 @@ for (const engine of ['tesseract', 'paddle']) {
     await page.getByLabel('Reader to try').selectOption(engine);
     const picker = page.getByLabel('Choose an image', { exact: true });
     await picker.setInputFiles(menu);
+    await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
     const reading = page.getByRole('region', { name: 'Photo reading' });
     await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 90_000 });
     await expect(reading.getByText('min6', { exact: true })).toBeVisible();
@@ -34,6 +35,7 @@ for (const engine of ['tesseract', 'paddle']) {
     await context.route(url => ['http:', 'https:'].includes(url.protocol), route => route.abort('internetdisconnected'));
     const requestCount = requests.length;
     await picker.setInputFiles(menu);
+    await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
     await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 30_000 });
     await page.getByText('Scan details', { exact: true }).click();
     await expect(page.getByText(/already loaded/)).toBeVisible();
@@ -67,15 +69,18 @@ test('cancel during model initialization stops the worker and permits another ph
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
+  await page.getByLabel('Reader to try').selectOption('tesseract');
   const picker = page.getByLabel('Choose an image', { exact: true });
   await picker.setInputFiles(menu);
+  await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
   await expect.poll(() => started).toBe(true);
   await page.getByRole('button', { name: 'Cancel reading' }).click();
-  await expect(page.getByText('Reading canceled. You can choose another photo.')).toBeVisible();
+  await expect(page.getByText('Reading canceled. You can adjust the area or choose another photo.')).toBeVisible();
   await expect.poll(() => page.workers().length).toBe(0);
   release();
   await context.unroute('**/ocr/tesseract/*.traineddata.gz');
   await picker.setInputFiles(menu);
+  await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
   await expect(page.getByRole('region', { name: 'Photo reading' }).getByText('ngau4', { exact: true })).toBeVisible({ timeout: 45_000 });
   await page.getByRole('button', { name: 'Read text', exact: true }).click();
   await expect.poll(() => page.workers().length).toBe(0);
@@ -115,6 +120,7 @@ test('keeps entered text available when later photo scripts cannot download', as
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
   await expect(page.getByLabel('Choose an image', { exact: true })).toBeVisible();
   await page.getByLabel('Choose an image', { exact: true }).setInputFiles(menu);
+  await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('The photo reader could not start.');
   await expect(page.getByRole('button', { name: 'Read text', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Read text', exact: true }).click();
