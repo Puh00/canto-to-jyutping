@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+test-results/
+playwright-report/
+.tools/
+*.local
+public/ocr/
+
+# Local documentation
+/.scratch/
+/CONTEXT.md
+/docs/*
+!/docs/licenses/

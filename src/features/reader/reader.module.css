@@ -1,0 +1,76 @@
+.reader { width: 100%; }
+.workspace { display: grid; grid-template-columns: 1fr 1.1fr; gap: 20px; align-items: stretch; }
+.inputCard, .outputCard { min-width: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: #fffefa; box-shadow: 0 4px 14px #243a3203; }
+.cardHeading { min-height: 65px; padding: 0 23px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid #e9ebe3; }
+.cardHeading > div { display: flex; align-items: center; gap: 12px; }
+.cardHeading h2, .cardHeading label { font-size: 13px; font-weight: 600; margin: 0; }
+.step { font-size: 10px; letter-spacing: 1px; color: #89978e; }
+.language { font-size: 10px; color: var(--muted); }
+.outputBadge { font-size: 10px; background: var(--soft-green); color: var(--green); border-radius: 5px; padding: 5px 8px; }
+.textarea { display: block; width: 100%; min-height: 237px; resize: vertical; padding: 25px 23px; border: none; border-radius: 0; background: transparent; font-family: var(--cjk); font-size: 24px; line-height: 1.8; color: var(--ink); }
+.textarea::placeholder { font: 14px/1.8 var(--sans); color: #808880; }
+.textarea:focus { outline: 2px solid var(--green); outline-offset: -3px; }
+.inputFooter, .outputFooter { padding: 13px 23px; min-height: 51px; border-top: 1px solid #e9ebe3; color: var(--muted); font-size: 10px; display: flex; align-items: center; }
+.inputFooter { justify-content: space-between; }
+.clear { border: 0; background: transparent; color: var(--muted); font-size: 11px; min-height: 24px; padding: 2px 0 2px 8px; }
+.clear:hover { color: var(--accent); }
+.clear span { font-size: 17px; margin-left: 6px; }
+.outputCard { display: flex; flex-direction: column; }
+.outputBody { flex: 1; padding: 24px; min-height: 237px; }
+.outputFooter { gap: 7px; background: #fbfcf6; }
+.smallDot { width: 5px; height: 5px; border-radius: 50%; background: #6c9270; flex-shrink: 0; }
+.empty { text-align: center; padding: 8px 0 11px; color: var(--muted); }
+.exampleCharacters { display: flex; justify-content: center; gap: 9px; margin-bottom: 18px; }
+.exampleCharacters > span { display: flex; flex-direction: column; width: 61px; height: 83px; align-items: center; justify-content: center; border: 1px solid #dce4d5; border-radius: 9px; background: #f1f5eccc; font: 31px var(--cjk); color: #4c7258; }
+.exampleCharacters small { margin-top: 5px; font: 11px var(--sans); }
+.empty p { font: 20px var(--serif); color: #596d5d; margin: 0 0 9px; }
+.empty > span { font-size: 11px; }
+.annotations { white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--cjk); font-size: 28px; line-height: 2.9; }
+.token { display: inline-flex; flex-direction: column; vertical-align: top; align-items: center; justify-content: start; margin: 0 3px 10px; min-width: 46px; max-width: 100%; padding: 4px 3px 7px; line-height: 1.4; border-radius: 6px; }
+.character { font-size: 30px; }
+.reading { margin-top: 5px; font: 12px/1.4 var(--sans); color: var(--green); white-space: nowrap; }
+.plain { font-size: 21px; }
+.exampleRow { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; padding: 20px 0 8px; }
+.exampleRow > span { font-size: 11px; color: var(--muted); margin-right: 4px; }
+.exampleRow button { border: 1px solid #dce0d6; border-radius: 30px; background: transparent; padding: 8px 12px; font-size: 10px; color: #4d6256; min-height: 33px; }
+.exampleRow button span { margin-left: 12px; }
+.exampleRow button:hover { background: #e9efdf; border-color: #bccbb6; }
+.accuracy { color: var(--muted); font-size: 10px; line-height: 1.7; margin: 11px 0 0; }
+@media (max-width: 680px) {
+  .workspace { grid-template-columns: 1fr; gap: 14px; }
+  .cardHeading { min-height: 57px; padding: 0 17px; }
+  .cardHeading > div { gap: 9px; }
+  .cardHeading h2, .cardHeading label { font-size: 12px; }
+  .textarea { min-height: 151px; padding: 18px 17px; font-size: 22px; }
+  .textarea::placeholder { font-size: 12px; }
+  .outputBody { min-height: 190px; padding: 18px 14px; }
+  .inputFooter, .outputFooter { padding: 9px 17px; min-height: 45px; }
+  .empty { padding: 2px 0; }
+  .exampleCharacters { margin-bottom: 13px; }
+  .exampleCharacters > span { height: 69px; width: 53px; font-size: 27px; }
+  .exampleRow { padding-top: 18px; gap: 7px; }
+  .exampleRow > span { width: 100%; margin-bottom: 4px; }
+  .exampleRow button { min-height: 38px; }
+  .clear { min-height: 28px; }
+}
+
+.interactive { background: transparent; border: 0; color: inherit; font-family: inherit; }
+.interactive .reading { text-decoration: underline dotted #9ab09c; text-underline-offset: 5px; }
+.interactive:hover { background: #eaf0e1; }
+.interactive:focus-visible { outline-offset: 0; }
+.missing .reading { color: var(--accent); }
+.readingHint { color: var(--muted); font-size: 10px; margin: 13px 0 0; line-height: 1.6; }
+.dialog { width: min(420px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow: auto; border: 1px solid #d7dfd0; border-radius: 17px; padding: 26px; background: #fffef8; color: var(--ink); box-shadow: 0 24px 80px #0d281833; }
+.dialog::backdrop { background: #12271e66; backdrop-filter: blur(3px); }
+.dialogHeader { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 26px; }
+.dialogHeader h2 { margin: 0; font: 23px var(--serif); }
+.dialogHeader h2 span { font-family: var(--cjk); }
+.closeDialog { width: 40px; height: 40px; border: 1px solid var(--line); background: transparent; border-radius: 50%; font-size: 25px; color: var(--muted); flex-shrink: 0; }
+.detailLabel { font-size: 9px; color: var(--muted); letter-spacing: 1.6px; margin: 20px 0 10px; }
+.chosenReading { display: inline-block; margin: 0; padding: 10px 16px; border-radius: 8px; background: var(--soft-green); color: var(--green); font-size: 23px; }
+.alternativeList { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
+.alternativeList li { border: 1px solid var(--line); border-radius: 7px; padding: 8px 11px; font-size: 15px; }
+.dialogNote { font-size: 12px; line-height: 1.7; color: var(--muted); margin: 25px 0 0; }
+.missingDetail { text-align: center; }
+.largeCharacter { font: 46px var(--cjk); margin: 0; }
+

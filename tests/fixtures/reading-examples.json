@@ -1,0 +1,83 @@
+{
+  "verifiedOn": "2026-09-20",
+  "method": "Expected readings independently checked in dictionary entries, not generated from ToJyutping. This is source review, not user/iPhone validation.",
+  "examples": [
+    {
+      "input": "銀行",
+      "accepted": [
+        "ngan4 hong4",
+        "ngan4 hong2"
+      ],
+      "sources": [
+        "https://words.hk/zidin/銀行"
+      ],
+      "note": "Both complete-word readings documented."
+    },
+    {
+      "input": "行路",
+      "accepted": [
+        "haang4 lou6"
+      ],
+      "sources": [
+        "https://words.hk/zidin/行路"
+      ],
+      "note": "Colloquial verb meaning to walk."
+    },
+    {
+      "input": "牛肉麵",
+      "accepted": [
+        "ngau4 juk6 min6"
+      ],
+      "sources": [
+        "https://words.hk/zidin/沙嗲",
+        "https://words.hk/zidin/麵"
+      ],
+      "note": "Sequence in 沙嗲牛肉麪; 麵 is a documented variant of 麪."
+    },
+    {
+      "input": "咖啡",
+      "accepted": [
+        "gaa3 fe1"
+      ],
+      "sources": [
+        "https://words.hk/zidin/咖啡"
+      ],
+      "note": "Whole-word reading; individual-character variants need not fit this word."
+    },
+    {
+      "input": "旺角",
+      "accepted": [
+        "wong6 gok3"
+      ],
+      "sources": [
+        "https://words.hk/zidin/旺角"
+      ],
+      "note": "Hong Kong place name."
+    },
+    {
+      "input": "請勿吸煙",
+      "accepted": [
+        "cing2 mat6 kap1 jin1",
+        "ceng2 mat6 kap1 jin1"
+      ],
+      "sources": [
+        "https://words.hk/zidin/勿",
+        "https://words.hk/zidin/請"
+      ],
+      "note": "Exact phrase under 勿 uses cing2; ceng2 alternative is composed from the polite-request sense of 請."
+    },
+    {
+      "input": "佢喺屋企",
+      "accepted": [
+        "keoi5 hai2 uk1 kei2",
+        "heoi5 hai2 uk1 kei2"
+      ],
+      "sources": [
+        "https://words.hk/zidin/佢",
+        "https://words.hk/zidin/喺",
+        "https://words.hk/zidin/屋企"
+      ],
+      "note": "Composed from entries; exact full sentence not independently attested."
+    }
+  ]
+}
