@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AppearanceControl } from './features/appearance/AppearanceControl';
 import { Reader } from './features/reader/Reader';
 
 import PhotoReader from './features/photo/PhotoReader';
@@ -12,7 +13,10 @@ export function App() {
           <span className="brand-mark" lang="zh-Hant">粵</span>
           <span>canto<span className="brand-dot">.</span></span>
         </a>
-        <span className="header-note"><span className="status-dot" /> Made for the way you speak</span>
+        <div className="header-actions">
+          <span className="header-note"><span className="status-dot" /> Made for the way you speak</span>
+          <AppearanceControl />
+        </div>
       </header>
       <main>
         <div className="intro">

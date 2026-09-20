@@ -3,7 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#183e35" />
+    <script>
+      // Apply a saved override before the page paints. System mode needs no stored value.
+      try {
+        const theme = localStorage.getItem('canto-theme');
+        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
+      } catch {}
+    </script>
     <meta name="description" content="Read traditional Chinese in Cantonese. Get Jyutping beneath every character, right in your browser." />
     <title>Canto — Characters into familiar words</title>
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />

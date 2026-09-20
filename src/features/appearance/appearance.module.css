@@ -1,0 +1,5 @@
+.control { display: flex; align-items: center; gap: 9px; font-size: 12px; color: var(--muted); }
+.control select { min-height: 44px; border: 1px solid var(--control-border); border-radius: 8px; padding: 8px 10px; background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
+@media (max-width: 680px) {
+  .control { gap: 7px; font-size: 11px; }
+}

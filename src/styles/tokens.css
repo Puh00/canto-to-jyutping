@@ -1,13 +1,28 @@
 :root {
-  color-scheme: light;
-  --paper: #f6f5ef;
-  --ink: #243a32;
-  --muted: #62706a;
-  --green: #1f5143;
-  --soft-green: #edf2e9;
-  --line: #dce0d6;
-  --accent: #b3573a;
+  color-scheme: light dark;
+  --paper: light-dark(#f6f5ef, #151f1a);
+  --surface: light-dark(#fffefa, #1e2b24);
+  --surface-subtle: light-dark(#fbfcf6, #1a271f);
+  --ink: light-dark(#243a32, #ecf1e8);
+  --muted: light-dark(#62706a, #adbcae);
+  --green: light-dark(#1f5143, #9bd2af);
+  --on-green: light-dark(#fffcef, #12271b);
+  --soft-green: light-dark(#edf2e9, #293f32);
+  --line: light-dark(#dce0d6, #405247);
+  --subtle-line: light-dark(#e9ebe3, #35483c);
+  --control-border: light-dark(#7c8d80, #718573);
+  --accent: light-dark(#b3573a, #f0ad8f);
+  --error: light-dark(#9a3e25, #ffb79f);
+  --hover: light-dark(#e9efdf, #324b3c);
+  --selection: light-dark(#d4e6d3, #395940);
+  --selection-ink: light-dark(#163d31, #edf3e8);
+  --photo-surround: light-dark(#e9ede3, #111813);
+  --card-shadow: light-dark(#243a3203, #00000020);
+  --dialog-shadow: light-dark(#0d281833, #00000080);
+  --backdrop: light-dark(#12271e66, #00000099);
   --serif: Georgia, 'Times New Roman', serif;
   --sans: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
   --cjk: 'PingFang TC', 'Microsoft JhengHei', 'Noto Sans CJK TC', sans-serif;
 }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }

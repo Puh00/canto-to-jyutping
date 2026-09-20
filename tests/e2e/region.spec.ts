@@ -5,7 +5,7 @@ test('reads highlighted lines and excludes text between them', async ({ page }) 
   test.setTimeout(120_000);
   await page.goto('/');
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
-  await expect(page.getByRole('combobox')).toHaveCount(0);
+  await expect(page.getByLabel('Reader to try')).toHaveCount(0);
   await page.getByLabel('Choose an image', { exact: true }).setInputFiles(path.resolve('tests/fixtures/menu-clean.png'));
   const image = page.getByRole('img', { name: 'Selected photo prepared for reading' });
   await expect(image).toBeVisible();
