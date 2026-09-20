@@ -5,7 +5,8 @@
 .tools input { width: 110px; min-height: 44px; accent-color: var(--green); }
 .tools button { min-height: 44px; background: transparent; border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; font: inherit; color: var(--green); }
 .stage { position: relative; width: 100%; margin: auto; overflow: hidden; touch-action: none; user-select: none; cursor: crosshair; background: var(--photo-surround); }
-.stage img { display: block; width: 100%; height: auto; pointer-events: none; }
+/* Match the white backing used for OCR, including transparent images. */
+.stage img { background: #fff; display: block; width: 100%; height: auto; pointer-events: none; }
 .overlay { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 
 .stage:focus-visible { outline: 3px solid var(--green); outline-offset: 3px; }

@@ -42,10 +42,11 @@ function contrast(foreground: string, background: string) {
       const channel = value / 255;
       return channel <= .04045 ? channel / 12.92 : ((channel + .055) / 1.055) ** 2.4;
     });
+    if (r === undefined || g === undefined || b === undefined) throw new Error('Expected an RGB color: ' + color);
     return .2126 * r + .7152 * g + .0722 * b;
   };
-  const values = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
-  return (values[0] + .05) / (values[1] + .05);
+  const front = luminance(foreground), back = luminance(background);
+  return (Math.max(front, back) + .05) / (Math.min(front, back) + .05);
 }
 
 async function expectReadable(locator: Locator) {
@@ -162,4 +163,35 @@ test('both themes keep readings legible and photo colors and highlights intact',
   await expect(reading.getByText('ngau4', { exact: true })).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('photo-light.png'), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});
+
+test('transparent photos retain their colors when appearance changes', async ({ page }) => {
+  await page.goto('/');
+  const png = await page.evaluate(() => {
+    const canvas = document.createElement('canvas');
+    canvas.width = 400; canvas.height = 200;
+    const context = canvas.getContext('2d')!;
+    context.font = '40px sans-serif';
+    context.fillText('牛肉麵', 30, 70);
+    context.fillStyle = '#e03030'; context.fillRect(30, 100, 70, 50);
+    context.fillStyle = '#30a050'; context.fillRect(130, 100, 70, 50);
+    context.fillStyle = '#3060d0'; context.fillRect(230, 100, 70, 50);
+    return canvas.toDataURL('image/png').split(',')[1]!;
+  });
+  const appearance = page.getByRole('combobox', { name: 'Appearance' });
+  await appearance.selectOption('dark');
+  await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
+  await page.getByLabel('Choose an image', { exact: true }).setInputFiles({
+    name: 'transparent.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64'),
+  });
+  const image = page.getByRole('img', { name: 'Selected photo prepared for reading' });
+  await expect(image).toBeVisible();
+  const darkPhoto = await photoPixels(page, image);
+  await appearance.selectOption('light');
+  expect((await photoPixels(page, image)).equals(darkPhoto)).toBe(true);
+  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  const stage = page.getByRole('group', { name: 'Highlight text in photo' });
+  const lightZoom = await photoPixels(page, stage);
+  await appearance.selectOption('dark');
+  expect((await photoPixels(page, stage)).equals(lightZoom)).toBe(true);
 });
