@@ -145,7 +145,7 @@ export default function PhotoReader() {
       <p className={styles.hint}>Photos are processed on your device. Initial downloads can take a while; later scans reuse the loaded reader.</p>
       <p role="status" className={styles.status}>{statusText}</p>
       {status === 'reading' && <progress aria-label="Photo recognition progress" />}
-      {error && <p role="alert" className={styles.error}>{error}</p>}
+      {!image && error && <p role="alert" className={styles.error}>{error}</p>}
     </section>
     {image && <section className={styles.controls} aria-label="Select text area">
       <PhotoHighlighter key={image.previewUrl} image={image} strokes={strokes} disabled={busy} onChange={changeHighlights} />
@@ -155,6 +155,10 @@ export default function PhotoReader() {
       </div>
     </section>}
     {result && <PhotoReading key={result.text} text={result.text} />}
+    {image && error && <section className={styles.reading} aria-labelledby="photo-error-title">
+      <h2 id="photo-error-title">Photo reading</h2>
+      <p role="alert" className={styles.error}>{error}</p>
+    </section>}
     {(result || attempts > 0) && <section className={styles.trial} aria-label="Photo trial timing">
       {result && <><p>Reading ready after <strong>{seconds(result.readyMs)} seconds</strong>{includesPhotoSelection
         ? ', including photo selection and highlighting.' : ', using the photo already open. Photo selection is excluded.'} {Math.max(0, attempts - 1)} retries.</p>
