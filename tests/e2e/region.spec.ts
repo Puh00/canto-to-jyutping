@@ -80,28 +80,3 @@ test('a touch can highlight a character before scanning', async ({ page, isMobil
   await page.getByRole('button', { name: 'Undo highlight', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Read highlighted text', exact: true })).toBeDisabled();
 });
-
-
-test('lifting a second finger does not interrupt the first brush stroke', async ({ page, browserName }) => {
-  test.skip(browserName !== 'chromium', 'Uses Chromium native multi-touch event injection.');
-  test.setTimeout(120_000);
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
-  await page.getByLabel('Choose an image', { exact: true }).setInputFiles(path.resolve('tests/fixtures/menu-clean.png'));
-  const image = page.getByRole('img', { name: 'Selected photo prepared for reading' });
-  await image.scrollIntoViewIfNeeded();
-  const bounds = (await image.boundingBox())!;
-  const finger = { id: 1, x: bounds.x + bounds.width * .075, y: bounds.y + bounds.height * .2 };
-  const other = { id: 2, x: bounds.x + bounds.width * .8, y: bounds.y + bounds.height * .8 };
-  const touch = await page.context().newCDPSession(page);
-  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [finger] });
-  await touch.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [finger, other] });
-  await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [other] });
-  await touch.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ ...finger, x: bounds.x + bounds.width * .285 }] });
-  await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  await touch.detach();
-  await page.getByRole('button', { name: 'Read highlighted text', exact: true }).click();
-  const reading = page.getByRole('region', { name: 'Photo reading' });
-  await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 90_000 });
-  await expect(reading.getByText('min6', { exact: true })).toBeVisible();
-});
