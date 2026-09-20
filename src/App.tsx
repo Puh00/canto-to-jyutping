@@ -1,7 +1,7 @@
-import { lazy, Suspense, useState } from 'react';
+import { useState } from 'react';
 import { Reader } from './features/reader/Reader';
 
-const PhotoReader = lazy(() => import('./features/photo/PhotoReader'));
+import PhotoReader from './features/photo/PhotoReader';
 
 export function App() {
   const [mode, setMode] = useState<'text' | 'photo'>('text');
@@ -25,7 +25,7 @@ export function App() {
           <button type="button" aria-pressed={mode === 'photo'} onClick={() => setMode('photo')}>Read a photo</button>
         </nav>
         <div hidden={mode !== 'text'}><Reader /></div>
-        {mode === 'photo' && <Suspense fallback={<p role="status">Opening the photo reader…</p>}><PhotoReader /></Suspense>}
+        {mode === 'photo' && <PhotoReader />}
         <aside className="reassurance" aria-label="About this reader">
           <div><span className="assurance-icon" aria-hidden="true">↗</span><p><strong>Open. Paste. Read.</strong><span>No account. No extra steps.</span></p></div>
           <div><span className="assurance-icon assurance-character" aria-hidden="true">字</span><p><strong>Your words stay yours.</strong><span>Original characters, with pronunciation.</span></p></div>

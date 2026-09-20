@@ -37,6 +37,7 @@ export default function PhotoReader() {
   const generation = useRef(0);
   const preview = useRef<string | null>(null);
   const startedAt = useRef<number | null>(null);
+  const pickerOpenedAt = useRef<number | null>(null);
   const busy = status === 'preparing' || status === 'reading';
 
   useEffect(() => () => {
@@ -53,7 +54,7 @@ export default function PhotoReader() {
   function startNewTrial() {
     generation.current++;
     if (busy) { session.current?.dispose(); session.current = null; }
-    clearPhoto(); startedAt.current = null; setAttempts(0); setStatus('idle');
+    clearPhoto(); startedAt.current = null; pickerOpenedAt.current = null; setAttempts(0); setStatus('idle');
   }
   function changeEngine(value: OcrEngine) {
     session.current?.dispose(); session.current = null;
@@ -61,14 +62,15 @@ export default function PhotoReader() {
   }
   function openPicker(event: React.MouseEvent<HTMLInputElement>) {
     event.currentTarget.value = '';
-    if (usableMs !== null) { startedAt.current = null; setAttempts(0); setUsableMs(null); }
-    startedAt.current ??= performance.now();
+    pickerOpenedAt.current = performance.now();
   }
   async function readPhoto(file?: File) {
     if (!file) return;
     const id = ++generation.current;
-    startedAt.current ??= performance.now();
-    clearPhoto(); setAttempts(value => value + 1); setStatus('preparing');
+    const newTrial = usableMs !== null || startedAt.current === null;
+    if (newTrial) startedAt.current = pickerOpenedAt.current ?? performance.now();
+    pickerOpenedAt.current = null;
+    clearPhoto(); setAttempts(value => newTrial ? 1 : value + 1); setStatus('preparing');
     try {
       const prepared = await prepareImage(file);
       if (id !== generation.current) { URL.revokeObjectURL(prepared.previewUrl); return; }
@@ -109,7 +111,7 @@ export default function PhotoReader() {
             <span>{choice.label}</span>
             <input type="file" accept="image/*" capture={choice.capture ? 'environment' : undefined}
               aria-label={choice.label} disabled={busy} onClick={openPicker}
-              ref={node => { if (node) node.oncancel = () => { if (!image && attempts === 0) startedAt.current = null; }; }}
+              ref={node => { if (node) node.oncancel = () => { pickerOpenedAt.current = null; }; }}
               onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; void readPhoto(file); }} />
           </label>)}
         {busy && <button className={styles.secondary} type="button" onClick={cancel}>Cancel reading</button>}

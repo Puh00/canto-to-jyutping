@@ -18,7 +18,7 @@ for (const engine of ['tesseract', 'paddle']) {
     });
     page.on('pageerror', error => pageErrors.push(error.message));
     await page.goto('/');
-    expect(requests.some(request => /ocr\/|ocr.worker|opencv/.test(request.url))).toBe(false);
+    expect(requests.some(request => /ocr\/|(?:tesseract|paddle)\.worker|opencv/.test(request.url))).toBe(false);
     await page.getByRole('button', { name: 'Read a photo', exact: true }).click({ timeout: 5000 });
     await page.getByLabel('Reader to try').selectOption(engine);
     const picker = page.getByLabel('Choose an image', { exact: true });
@@ -40,6 +40,12 @@ for (const engine of ['tesseract', 'paddle']) {
     expect(requests).toHaveLength(requestCount);
     await page.getByRole('button', { name: 'This reading is usable' }).click();
     await expect(page.getByText(/Usable after/)).toBeVisible();
+    const accepted = await page.getByText(/Usable after/).textContent();
+    await Promise.all([page.waitForEvent('filechooser'), picker.click()]);
+    await picker.dispatchEvent('cancel');
+    await expect(page.getByText(/Usable after/)).toHaveText(accepted!);
+    await expect(page.getByRole('button', { name: 'This reading is usable' })).toHaveCount(0);
+
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
     expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
     await page.getByRole('button', { name: 'Start a new trial' }).click();
@@ -98,3 +104,19 @@ test('honors JPEG orientation when preparing the photo', async ({ page }) => {
   await expect(preview).toHaveCount(0);
 });
 
+
+test('keeps entered text available when later photo scripts cannot download', async ({ page, context }) => {
+  let block = false;
+  await context.route('**/assets/*.js', route => block ? route.abort('failed') : route.continue());
+  await page.goto('/');
+  const text = page.getByRole('textbox', { name: 'Chinese text' });
+  await text.fill('銀行');
+  block = true;
+  await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
+  await expect(page.getByLabel('Choose an image', { exact: true })).toBeVisible();
+  await page.getByLabel('Choose an image', { exact: true }).setInputFiles(menu);
+  await expect(page.getByRole('alert')).toContainText('The photo reader could not start.');
+  await expect(page.getByRole('button', { name: 'Read text', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Read text', exact: true }).click();
+  await expect(text).toHaveValue('銀行');
+});
