@@ -42,3 +42,10 @@ it('returns no annotations for an empty input', () => {
   expect(annotate('')).toEqual([]);
 });
 
+
+it.each(['神\uFE00', '神\u{E0100}', '神\u0301'])('keeps trailing Unicode marks attached to the source character in %s', source => {
+  const result = annotate(source + '行路');
+  expect(result[0]).toMatchObject({ text: source, start: 0, end: source.length, reading: 'san4', kind: 'han' });
+  expect(result[1]).toMatchObject({ text: '行', start: source.length, end: source.length + 1, reading: 'haang4' });
+  expect(result.map(token => token.text).join('')).toBe(source + '行路');
+});

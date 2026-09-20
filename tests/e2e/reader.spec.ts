@@ -68,3 +68,13 @@ test('converts after initial load without making network requests or using app s
   expect(requests).toEqual([]);
   expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
 });
+
+test('preserves variation selectors and combining marks inside the displayed character', async ({ page }) => {
+  await page.goto('/');
+  const characters = ['神\uFE00', '神\u{E0100}', '神\u0301'];
+  await page.getByRole('textbox', { name: 'Chinese text' }).fill(characters.join(' '));
+  const output = page.getByRole('region', { name: 'Your Cantonese reading' });
+  for (const character of characters) {
+    await expect(output.getByText(character, { exact: true })).toBeVisible();
+  }
+});
