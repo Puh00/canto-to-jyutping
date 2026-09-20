@@ -142,3 +142,62 @@ test('zoom controls, panning and resizing preserve the selected image pixels', a
   await expect(page.getByRole('button', { name: 'Undo highlight', exact: true })).toBeDisabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });
+
+test('switching from keyboard to pointer preserves both highlight strokes', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
+  await page.getByLabel('Choose an image', { exact: true }).setInputFiles(path.resolve('tests/fixtures/menu-clean.png'));
+  const stage = page.getByRole('group', { name: 'Highlight text in photo' });
+  await stage.scrollIntoViewIfNeeded();
+  await stage.focus();
+  await stage.press('Space');
+  await stage.press('ArrowLeft');
+  const bounds = (await stage.boundingBox())!;
+  await page.mouse.move(bounds.x + bounds.width * .08, bounds.y + bounds.height * .2);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + bounds.width * .28, bounds.y + bounds.height * .2, { steps: 6 });
+  await page.mouse.up();
+  const read = page.getByRole('button', { name: 'Read highlighted text', exact: true });
+  await page.getByRole('button', { name: 'Undo highlight', exact: true }).click();
+  await expect(read).toBeEnabled();
+  await page.getByRole('button', { name: 'Undo highlight', exact: true }).click();
+  await expect(read).toBeDisabled();
+});
+
+test('keyboard brushing returns to the visible photo after zooming and panning', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
+  await page.getByLabel('Choose an image', { exact: true }).setInputFiles(path.resolve('tests/fixtures/menu-clean.png'));
+  await page.getByLabel('Brush size', { exact: true }).press('End');
+  const stage = page.getByRole('group', { name: 'Highlight text in photo' });
+  await stage.focus();
+  for (let i = 0; i < 20; i++) { await stage.press('ArrowRight'); await stage.press('ArrowDown'); }
+  const zoomIn = page.getByRole('button', { name: 'Zoom in', exact: true });
+  for (let i = 0; i < 3; i++) await zoomIn.click();
+  await page.getByRole('button', { name: 'Move photo', exact: true }).click();
+  await stage.scrollIntoViewIfNeeded();
+  const bounds = (await stage.boundingBox())!;
+  await page.mouse.move(bounds.x + bounds.width * .05, bounds.y + bounds.height * .5);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + bounds.width * .95, bounds.y + bounds.height * .5, { steps: 8 });
+  await page.mouse.up();
+  // Finish moving to the left edge while keeping the old keyboard cursor out of view.
+  await page.mouse.move(bounds.x + bounds.width * .2, bounds.y + bounds.height * .5);
+  await page.mouse.down();
+  await page.mouse.move(bounds.x + bounds.width * .7, bounds.y + bounds.height * .5, { steps: 8 });
+  await page.mouse.up();
+  await page.getByRole('button', { name: 'Brush', exact: true }).click();
+  await stage.focus();
+  for (let i = 0; i < 8; i++) await stage.press('ArrowUp');
+  for (let i = 0; i < 5; i++) await stage.press('ArrowLeft');
+  await stage.press('Space');
+  for (let i = 0; i < 10; i++) await stage.press('ArrowRight');
+  await stage.press('Space');
+  await page.getByRole('button', { name: 'Read highlighted text', exact: true }).click();
+  const reading = page.getByRole('region', { name: 'Photo reading' });
+  await expect(reading.getByText('咖', { exact: true })).toBeVisible({ timeout: 15_000 });
+  await expect(reading.getByText('啡', { exact: true })).toBeVisible();
+  await expect(reading.getByText('牛', { exact: true })).toHaveCount(0);
+  await expect(reading.getByText('旺', { exact: true })).toHaveCount(0);
+});

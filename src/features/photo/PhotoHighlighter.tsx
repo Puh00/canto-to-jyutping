@@ -1,15 +1,15 @@
 import { useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent } from 'react';
 import type { HighlightStroke, ImagePoint, OpenedImage } from '../../ocr/prepare-image';
-import { usePhotoViewport } from './usePhotoViewport';
-import type { PhotoView } from './usePhotoViewport';
+import { clampPhotoZoom, MAX_PHOTO_ZOOM, MIN_PHOTO_ZOOM, usePhotoViewport } from './usePhotoViewport';
+import type { ClientPoint, PhotoView, ViewportPoint } from './usePhotoViewport';
 import styles from './highlighter.module.css';
 
 type Props = { image: OpenedImage; strokes: HighlightStroke[]; disabled: boolean; onChange: (strokes: HighlightStroke[]) => void };
 type BrushGesture = { id: number | 'keyboard'; previous: HighlightStroke[]; stroke: HighlightStroke };
 type PinchGesture = { distance: number; scale: number; anchor: ImagePoint };
-type PanGesture = { id: number; start: ImagePoint; view: PhotoView };
-const clientPoint = (event: PointerEvent): ImagePoint => ({ x: event.clientX, y: event.clientY });
+type PanGesture = { id: number; start: ViewportPoint; view: PhotoView };
+const clientPoint = (event: PointerEvent): ClientPoint => ({ clientX: event.clientX, clientY: event.clientY });
 
 export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) {
   const [brushSize, setBrushSize] = useState(12);
@@ -20,14 +20,14 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
   const viewport = usePhotoViewport(disabled);
   const { stage, view, imagePoint, viewportPoint, zoomAt, place } = viewport;
   const drag = useRef<BrushGesture | null>(null);
-  const touches = useRef(new Map<number, ImagePoint>());
+  const touches = useRef(new Map<number, ClientPoint>());
   const pinch = useRef<PinchGesture | null>(null);
   const pan = useRef<PanGesture | null>(null);
   const waitForLift = useRef(false);
 
-  function begin(id: number | 'keyboard', point: ImagePoint) {
+  function begin(id: number | 'keyboard', point: ImagePoint, previous = strokes) {
     const stroke = { points: [point], width: brushSize / 100 / view.scale };
-    drag.current = { id, previous: strokes, stroke };
+    drag.current = { id, previous, stroke };
     setDraft(stroke);
   }
   function extend(point: ImagePoint) {
@@ -38,20 +38,23 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
   }
   function finishBrush(canceled = false) {
     const active = drag.current;
-    if (active && !canceled) onChange([...active.previous, active.stroke]);
+    const committed = active && !canceled ? [...active.previous, active.stroke] : strokes;
+    if (active && !canceled) onChange(committed);
     drag.current = null; setDraft(null);
+    return committed;
   }
   function touchPair() {
     const [first, second] = [...touches.current.values()];
     if (!first || !second) return null;
-    return { distance: Math.max(1, Math.hypot(second.x - first.x, second.y - first.y)),
-      middle: { x: (first.x + second.x) / 2, y: (first.y + second.y) / 2 } };
+    return { distance: Math.max(1, Math.hypot(second.clientX - first.clientX, second.clientY - first.clientY)),
+      middle: { clientX: (first.clientX + second.clientX) / 2, clientY: (first.clientY + second.clientY) / 2 } };
   }
   function start(event: PointerEvent<HTMLDivElement>) {
     if (disabled || event.button !== 0) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
     viewport.pointerActive.current = true; setShowCursor(false);
+    const previous = drag.current?.id === 'keyboard' ? finishBrush() : strokes;
     if (event.pointerType === 'touch') {
       touches.current.set(event.pointerId, clientPoint(event));
       if (touches.current.size >= 2) {
@@ -64,14 +67,14 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
     } else if (!event.isPrimary) return;
     if (mode === 'move') {
       pan.current = { id: event.pointerId, start: viewportPoint(clientPoint(event)), view: viewport.viewRef.current };
-    } else begin(event.pointerId, imagePoint(clientPoint(event)));
+    } else begin(event.pointerId, imagePoint(clientPoint(event)), previous);
   }
   function move(event: PointerEvent) {
     if (touches.current.has(event.pointerId)) touches.current.set(event.pointerId, clientPoint(event));
     if (pinch.current) {
       const pair = touchPair();
       if (pair) {
-        const scale = Math.max(1, Math.min(6, pinch.current.scale * pair.distance / pinch.current.distance));
+        const scale = clampPhotoZoom(pinch.current.scale * pair.distance / pinch.current.distance);
         const middle = viewportPoint(pair.middle);
         place({ scale, x: middle.x - pinch.current.anchor.x * scale, y: middle.y - pinch.current.anchor.y * scale });
       }
@@ -93,6 +96,12 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
       viewport.pointerActive.current = false;
     }
   }
+  function cursorInView(): ImagePoint {
+    const { scale, x, y } = viewport.viewRef.current;
+    const screen = { x: cursor.x * scale + x, y: cursor.y * scale + y };
+    if (screen.x >= 0 && screen.x <= 1 && screen.y >= 0 && screen.y <= 1) return cursor;
+    return { x: (.5 - x) / scale, y: (.5 - y) / scale };
+  }
   function keyDown(event: KeyboardEvent) {
     if (disabled) return;
     const directions: Record<string, ImagePoint> = {
@@ -108,15 +117,19 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
         return;
       }
       setShowCursor(true);
-      const next = { x: Math.max(0, Math.min(1, cursor.x + direction.x * step / view.scale)),
-        y: Math.max(0, Math.min(1, cursor.y + direction.y * step / view.scale)) };
+      const origin = cursorInView();
+      if (origin !== cursor && drag.current?.id === 'keyboard') finishBrush();
+      const next = {
+        x: Math.max(-view.x / view.scale, Math.min((1 - view.x) / view.scale, origin.x + direction.x * step / view.scale)),
+        y: Math.max(-view.y / view.scale, Math.min((1 - view.y) / view.scale, origin.y + direction.y * step / view.scale)),
+      };
       setCursor(next);
       if (drag.current?.id === 'keyboard') extend(next);
     } else if (event.key === ' ' && mode === 'brush') {
       event.preventDefault(); setShowCursor(true);
       if (event.repeat) return;
       if (drag.current?.id === 'keyboard') finishBrush();
-      else begin('keyboard', cursor);
+      else { const point = cursorInView(); setCursor(point); begin('keyboard', point); }
     } else if (event.key === 'Escape' || event.key === 'Enter') {
       event.preventDefault(); finishBrush(event.key === 'Escape');
     }
@@ -131,10 +144,10 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
       <button type="button" disabled={disabled || !strokes.length} onClick={() => onChange([])}>Clear highlights</button>
     </div>
     <div className={styles.tools} aria-label="Photo zoom controls">
-      <button type="button" disabled={disabled || view.scale <= 1} onClick={() => zoomAt(view.scale / 1.5)}>Zoom out</button>
+      <button type="button" disabled={disabled || view.scale <= MIN_PHOTO_ZOOM} onClick={() => zoomAt(view.scale / 1.5)}>Zoom out</button>
       <output aria-label="Photo zoom">{Math.round(view.scale * 100)}%</output>
-      <button type="button" disabled={disabled || view.scale >= 6} onClick={() => zoomAt(view.scale * 1.5)}>Zoom in</button>
-      <button type="button" disabled={disabled || view.scale === 1} onClick={() => zoomAt(1)}>Reset zoom</button>
+      <button type="button" disabled={disabled || view.scale >= MAX_PHOTO_ZOOM} onClick={() => zoomAt(view.scale * 1.5)}>Zoom in</button>
+      <button type="button" disabled={disabled || view.scale === MIN_PHOTO_ZOOM} onClick={() => zoomAt(MIN_PHOTO_ZOOM)}>Reset zoom</button>
     </div>
     <div className={styles.tools} aria-label="Photo interaction">
       <button type="button" disabled={disabled} aria-pressed={mode === 'brush'} onClick={() => setMode('brush')}>Brush</button>
@@ -145,6 +158,7 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
       cursor: mode === 'move' ? 'grab' : 'crosshair' }}
       role="group" aria-label="Highlight text in photo" aria-describedby="highlight-keyboard-help" aria-disabled={disabled}
       tabIndex={disabled ? -1 : 0} onKeyDown={keyDown}
+      onFocus={() => setCursor(cursorInView())}
       onBlur={() => { if (drag.current?.id === 'keyboard') finishBrush(); setShowCursor(false); }}
       onPointerDown={start} onPointerMove={move} onPointerUp={finish}
       onPointerCancel={event => finish(event, true)} onLostPointerCapture={event => finish(event, true)}>
