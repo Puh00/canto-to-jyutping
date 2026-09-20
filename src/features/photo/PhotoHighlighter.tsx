@@ -28,6 +28,11 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
     if (!active || event.pointerId !== active.id) return;
     extend(point(event));
   }
+  function finish(event: PointerEvent, canceled = false) {
+    if (drag.current?.id !== event.pointerId) return;
+    if (canceled) onChange(drag.current.previous);
+    drag.current = null;
+  }
   function begin(id: number | 'keyboard', point: ImagePoint) {
     const stroke = { points: [point], width: brushSize / 100 };
     drag.current = { id, previous: strokes, stroke };
@@ -73,11 +78,11 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
     <div ref={stage} className={styles.stage} style={{ maxWidth: 520 * image.originalWidth / image.originalHeight }}
       role="group" aria-label="Highlight text in photo" aria-describedby="highlight-keyboard-help" aria-disabled={disabled}
       tabIndex={disabled ? -1 : 0} onKeyDown={keyDown}
-      onBlur={() => { drag.current = null; setShowCursor(false); }}
+      onBlur={() => { if (drag.current?.id === 'keyboard') drag.current = null; setShowCursor(false); }}
       onPointerDown={start} onPointerMove={move}
-      onPointerUp={() => { drag.current = null; }}
-      onPointerCancel={() => { if (drag.current) onChange(drag.current.previous); drag.current = null; }}
-      onLostPointerCapture={() => { drag.current = null; }}>
+      onPointerUp={finish}
+      onPointerCancel={event => finish(event, true)}
+      onLostPointerCapture={finish}>
       <img src={image.previewUrl} alt="Selected photo prepared for reading" draggable={false} />
       <svg className={styles.overlay} viewBox={'0 0 ' + image.originalWidth + ' ' + image.originalHeight} aria-hidden="true">
         <g opacity=".38" fill="#e7aa18" stroke="#e7aa18" strokeLinecap="round" strokeLinejoin="round">

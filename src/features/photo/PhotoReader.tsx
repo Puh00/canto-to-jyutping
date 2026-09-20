@@ -35,6 +35,7 @@ export default function PhotoReader() {
   const [error, setError] = useState('');
   const [attempts, setAttempts] = useState(0);
   const [usableMs, setUsableMs] = useState<number | null>(null);
+  const [includesPhotoSelection, setIncludesPhotoSelection] = useState(true);
   const session = useRef<ReturnType<typeof createOcrSession> | null>(null);
   const generation = useRef(0);
   const source = useRef<OpenedImage | null>(null);
@@ -57,13 +58,14 @@ export default function PhotoReader() {
   function startNewTrial() {
     generation.current++;
     if (busy) { session.current?.dispose(); session.current = null; }
-    clearPhoto(); startedAt.current = null; pickerOpenedAt.current = null; setAttempts(0); setStatus('idle');
+    clearPhoto(); startedAt.current = null; pickerOpenedAt.current = null; setAttempts(0); setIncludesPhotoSelection(true); setStatus('idle');
   }
   function changeEngine(value: OcrEngine) {
     generation.current++;
     session.current?.dispose(); session.current = null;
     clearResult(); scanned.current = false; setEngine(value);
     startedAt.current = image ? performance.now() : null;
+    setIncludesPhotoSelection(!image);
     setAttempts(image ? 1 : 0); setStatus(image ? 'selecting' : 'idle');
   }
   function openPicker(event: React.MouseEvent<HTMLInputElement>) {
@@ -76,6 +78,7 @@ export default function PhotoReader() {
     const newTrial = usableMs !== null || startedAt.current === null;
     if (newTrial) startedAt.current = pickerOpenedAt.current ?? performance.now();
     pickerOpenedAt.current = null;
+    setIncludesPhotoSelection(true);
     clearPhoto(); setAttempts(value => newTrial ? 1 : value + 1); setStatus('preparing');
     try {
       const opened = await openImage(file);
@@ -87,15 +90,19 @@ export default function PhotoReader() {
       setStatus('error');
     }
   }
+  function beginAfterAcceptedReading() {
+    if (usableMs === null) return;
+    startedAt.current = performance.now(); setAttempts(1); scanned.current = false; setIncludesPhotoSelection(false);
+  }
   function changeHighlights(value: HighlightStroke[]) {
     if (busy) return;
-    if (usableMs !== null) { startedAt.current = performance.now(); setAttempts(1); scanned.current = false; }
+    beginAfterAcceptedReading();
     setStrokes(value); clearResult(); setStatus('selecting');
   }
   async function readRegion(whole = false) {
     if (!image || busy) return;
     const id = ++generation.current;
-    if (usableMs !== null) { startedAt.current = performance.now(); setAttempts(1); scanned.current = false; }
+    beginAfterAcceptedReading();
     if (scanned.current) setAttempts(value => value + 1);
     scanned.current = true;
     clearResult(); setStatus('reading'); setProgress({ stage: 'loading' });
@@ -166,7 +173,8 @@ export default function PhotoReader() {
     </section>}
     {result && <PhotoReading key={result.text} text={result.text} />}
     {(result || attempts > 0) && <section className={styles.trial} aria-label="Photo trial timing">
-      {result && <><p>Reading ready after <strong>{seconds(result.readyMs)} seconds</strong>, including photo selection, area selection and {Math.max(0, attempts - 1)} retries.</p>
+      {result && <><p>Reading ready after <strong>{seconds(result.readyMs)} seconds</strong>{includesPhotoSelection
+        ? ', including photo selection and highlighting.' : ', using the photo already open. Photo selection is excluded.'} {Math.max(0, attempts - 1)} retries.</p>
         {usableMs === null ? <button className={styles.accept} type="button" onClick={() => setUsableMs(performance.now() - startedAt.current!)}>This reading is usable</button>
           : <p role="status">Usable after <strong>{seconds(usableMs)} seconds</strong>. Compare this with your usual workflow.</p>}
         <details><summary>Scan details</summary><dl>
