@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import type { KeyboardEvent, PointerEvent } from 'react';
 import type { HighlightStroke, ImagePoint, OpenedImage } from '../../ocr/prepare-image';
-import { clampPhotoZoom, MAX_PHOTO_ZOOM, MIN_PHOTO_ZOOM, usePhotoViewport } from './usePhotoViewport';
+import { clampPhotoZoom, MIN_PHOTO_ZOOM, usePhotoViewport } from './usePhotoViewport';
 import type { ClientPoint, PhotoView, ViewportPoint } from './usePhotoViewport';
 import styles from './highlighter.module.css';
 
@@ -104,6 +104,15 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
   }
   function keyDown(event: KeyboardEvent) {
     if (disabled) return;
+    if (!event.ctrlKey && !event.metaKey && !event.altKey && ['+', '=', '-', '0'].includes(event.key)) {
+      event.preventDefault();
+      if (viewport.pointerActive.current) return;
+      if (drag.current?.id === 'keyboard') finishBrush();
+      setShowCursor(false);
+      const scale = viewport.viewRef.current.scale;
+      zoomAt(event.key === '0' ? MIN_PHOTO_ZOOM : event.key === '-' ? scale / 1.5 : scale * 1.5);
+      return;
+    }
     const directions: Record<string, ImagePoint> = {
       ArrowLeft: { x: -1, y: 0 }, ArrowRight: { x: 1, y: 0 },
       ArrowUp: { x: 0, y: -1 }, ArrowDown: { x: 0, y: 1 },
@@ -136,23 +145,19 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
   }
   const visibleStrokes = draft ? [...strokes, draft] : strokes;
   return <figure className={styles.selector}>
-    <figcaption>Brush over whole characters. Pinch with two fingers or use the wheel to zoom.</figcaption>
-    <div className={styles.tools}>
-      <label>Brush size <input type="range" min="4" max="30" value={brushSize} disabled={disabled}
-        onChange={event => setBrushSize(Number(event.target.value))} /></label>
-      <button type="button" disabled={disabled || !strokes.length} onClick={() => onChange(strokes.slice(0, -1))}>Undo highlight</button>
-      <button type="button" disabled={disabled || !strokes.length} onClick={() => onChange([])}>Clear highlights</button>
-    </div>
-    <div className={styles.tools} aria-label="Photo zoom controls">
-      <button type="button" disabled={disabled || view.scale <= MIN_PHOTO_ZOOM} onClick={() => zoomAt(view.scale / 1.5)}>Zoom out</button>
+    <figcaption>
+      <span>Highlight the text</span>
       <output aria-label="Photo zoom">{Math.round(view.scale * 100)}%</output>
-      <button type="button" disabled={disabled || view.scale >= MAX_PHOTO_ZOOM} onClick={() => zoomAt(view.scale * 1.5)}>Zoom in</button>
-      <button type="button" disabled={disabled || view.scale === MIN_PHOTO_ZOOM} onClick={() => zoomAt(MIN_PHOTO_ZOOM)}>Reset zoom</button>
-    </div>
-    <div className={styles.tools} aria-label="Photo interaction">
-      <button type="button" disabled={disabled} aria-pressed={mode === 'brush'} onClick={() => setMode('brush')}>Brush</button>
-      <button type="button" disabled={disabled} aria-pressed={mode === 'move'} onClick={() => setMode('move')}>Move photo</button>
-      <span>Two fingers always move the photo.</span>
+    </figcaption>
+    <div className={styles.toolbar} role="group" aria-label="Photo tools">
+      <div className={styles.modes} role="group" aria-label="Photo interaction">
+        <button type="button" disabled={disabled} aria-pressed={mode === 'brush'} onClick={() => setMode('brush')}>Brush</button>
+        <button type="button" disabled={disabled} aria-label="Move photo" aria-pressed={mode === 'move'} onClick={() => setMode('move')}>Move</button>
+      </div>
+      <div className={styles.actions}>
+        <button type="button" aria-label="Undo highlight" disabled={disabled || !strokes.length} onClick={() => onChange(strokes.slice(0, -1))}>Undo</button>
+        <button type="button" aria-label="Reset zoom" disabled={disabled || view.scale === MIN_PHOTO_ZOOM} onClick={() => zoomAt(MIN_PHOTO_ZOOM)}>Reset</button>
+      </div>
     </div>
     <div ref={stage} className={styles.stage} style={{ maxWidth: 520 * image.originalWidth / image.originalHeight,
       cursor: mode === 'move' ? 'grab' : 'crosshair' }}
@@ -178,6 +183,15 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
         </svg>
       </div>
     </div>
-    <p id="highlight-keyboard-help" className={styles.keyboardHelp}>Keyboard: arrows move the brush or photo. In Brush mode, Space starts or stops highlighting; Escape cancels it.</p>
+    <div className={styles.brushTools}>
+      <label>Brush size <input type="range" min="4" max="30" value={brushSize} disabled={disabled}
+        onChange={event => setBrushSize(Number(event.target.value))} /></label>
+      <button type="button" aria-label="Clear highlights" disabled={disabled || !strokes.length} onClick={() => onChange([])}>Clear</button>
+    </div>
+    <details className={styles.help}>
+      <summary>Photo tips</summary>
+      <p>Brush over whole characters. Pinch to zoom and use two fingers to move the photo. On a desktop, scroll over the photo to zoom and choose Move to pan. Reset fits the photo without clearing highlights.</p>
+      <p id="highlight-keyboard-help">Keyboard: + and − zoom, 0 resets the view, and arrows move the brush or photo. In Brush mode, Space starts or stops highlighting; Escape cancels it.</p>
+    </details>
   </figure>;
 }

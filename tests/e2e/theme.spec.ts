@@ -189,8 +189,8 @@ test('transparent photos retain their colors when appearance changes', async ({ 
   const darkPhoto = await photoPixels(page, image);
   await appearance.selectOption('light');
   expect((await photoPixels(page, image)).equals(darkPhoto)).toBe(true);
-  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
   const stage = page.getByRole('group', { name: 'Highlight text in photo' });
+  await stage.press('+');
   const lightZoom = await photoPixels(page, stage);
   await appearance.selectOption('dark');
   expect((await photoPixels(page, stage)).equals(lightZoom)).toBe(true);

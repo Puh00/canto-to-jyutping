@@ -33,7 +33,13 @@ test('wheel zoom and reset keep brushed text aligned for OCR', async ({ page, is
   await expect(reading.getByText('啡', { exact: true })).toBeVisible();
   await expect(reading.getByText('牛', { exact: true })).toHaveCount(0);
   await expect(reading.getByText('旺', { exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: 'Zoom in', exact: true }).click();
+  await stage.scrollIntoViewIfNeeded();
+  const fitted = (await stage.boundingBox())!;
+  await page.mouse.move(fitted.x + fitted.width / 2, fitted.y + fitted.height / 2);
+  await page.mouse.wheel(0, -450);
+  await expect(page.getByLabel('Photo zoom', { exact: true })).not.toHaveText('100%');
+  await page.mouse.wheel(0, 500);
+  await expect(page.getByLabel('Photo zoom', { exact: true })).toHaveText('100%');
   await expect(reading.getByText('咖', { exact: true })).toBeVisible();
 });
 
@@ -95,17 +101,22 @@ test('pinch zoom and two-finger pan add no marks before a fresh brush stroke', a
   await touch.detach();
 });
 
-test('zoom controls, panning and resizing preserve the selected image pixels', async ({ page }) => {
+test('keyboard zoom, panning and resizing preserve the selected image pixels', async ({ page }) => {
   test.setTimeout(120_000);
   await page.goto('/');
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
   const picker = page.getByLabel('Choose an image', { exact: true });
   await picker.setInputFiles(path.resolve('tests/fixtures/menu-clean.png'));
   await page.getByLabel('Brush size', { exact: true }).press('End');
-  const zoomIn = page.getByRole('button', { name: 'Zoom in', exact: true });
-  await zoomIn.click();
-  await zoomIn.click();
+  await expect(page.getByRole('button', { name: 'Zoom in', exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Zoom out', exact: true })).toHaveCount(0);
   const stage = page.getByRole('group', { name: 'Highlight text in photo' });
+  await stage.press('+');
+  await expect(page.getByLabel('Photo zoom', { exact: true })).toHaveText('150%');
+  await stage.press('-');
+  await expect(page.getByLabel('Photo zoom', { exact: true })).toHaveText('100%');
+  await stage.press('+');
+  await stage.press('+');
   await page.getByRole('button', { name: 'Move photo', exact: true }).click();
   await stage.scrollIntoViewIfNeeded();
   const bounds = (await stage.boundingBox())!;
@@ -132,13 +143,15 @@ test('zoom controls, panning and resizing preserve the selected image pixels', a
   await expect(reading.getByText('啡', { exact: true })).toBeVisible();
   await expect(reading.getByText('牛', { exact: true })).toHaveCount(0);
   await expect(reading.getByText('旺', { exact: true })).toHaveCount(0);
-  for (let i = 0; i < 5; i++) await zoomIn.click();
+  for (let i = 0; i < 6; i++) await stage.press('+');
   await expect(page.getByLabel('Photo zoom', { exact: true })).toHaveText('600%');
-  await expect(zoomIn).toBeDisabled();
+  await stage.press('0');
+  await expect(page.getByLabel('Photo zoom', { exact: true })).toHaveText('100%');
   await expect(reading.getByText('咖', { exact: true })).toBeVisible();
   await picker.setInputFiles(path.resolve('tests/fixtures/orientation-6.jpg'));
   await expect(page.getByLabel('Photo zoom', { exact: true })).toHaveText('100%');
-  await expect(page.getByRole('button', { name: 'Zoom out', exact: true })).toBeDisabled();
+  await stage.press('-');
+  await expect(page.getByLabel('Photo zoom', { exact: true })).toHaveText('100%');
   await expect(page.getByRole('button', { name: 'Undo highlight', exact: true })).toBeDisabled();
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 });
@@ -173,8 +186,7 @@ test('keyboard brushing returns to the visible photo after zooming and panning',
   const stage = page.getByRole('group', { name: 'Highlight text in photo' });
   await stage.focus();
   for (let i = 0; i < 20; i++) { await stage.press('ArrowRight'); await stage.press('ArrowDown'); }
-  const zoomIn = page.getByRole('button', { name: 'Zoom in', exact: true });
-  for (let i = 0; i < 3; i++) await zoomIn.click();
+  for (let i = 0; i < 3; i++) await stage.press('+');
   await page.getByRole('button', { name: 'Move photo', exact: true }).click();
   await stage.scrollIntoViewIfNeeded();
   const bounds = (await stage.boundingBox())!;
