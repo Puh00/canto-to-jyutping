@@ -12,6 +12,7 @@ for (const entry of await readdir('test-results', { withFileTypes: true })) {
   } catch {
     continue;
   }
+  if (record.engine !== 'paddle') continue;
   const paths = [...new Set(record.responses
     .filter(response => response.url.startsWith('http'))
     .map(response => new URL(response.url).pathname))];
@@ -41,8 +42,8 @@ for (const entry of await readdir('test-results', { withFileTypes: true })) {
   });
 }
 
-if (!['tesseract', 'paddle'].every(engine => results.some(result => result.engine === engine))) {
-  throw new Error('Run the complete photo browser tests before measuring both engines.');
+if (!results.length) {
+  throw new Error('Run the PaddleOCR photo browser test before measuring its assets.');
 }
 await writeFile('docs/validation/ocr-asset-transfer.json', JSON.stringify(results, null, 2) + '\n');
 console.log(results.map(({ engine, totalBytes }) => ({ engine, totalBytes })));

@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { createOcrSession } from '../../ocr/session';
 import { openImage } from '../../ocr/prepare-image';
 import type { HighlightStroke, OpenedImage } from '../../ocr/prepare-image';
-import type { OcrEngine, OcrProgress, OcrResult } from '../../ocr/types';
+import type { OcrProgress, OcrResult } from '../../ocr/types';
 import { annotate } from '../../pronunciation/annotate';
 import type { Annotation } from '../../pronunciation/types';
 import { AnnotatedText } from '../reader/AnnotatedText';
@@ -26,7 +26,6 @@ function PhotoReading({ text }: { text: string }) {
 }
 
 export default function PhotoReader() {
-  const [engine, setEngine] = useState<OcrEngine>('paddle');
   const [status, setStatus] = useState<Status>('idle');
   const [progress, setProgress] = useState<OcrProgress>({ stage: 'loading' });
   const [image, setImage] = useState<OpenedImage | null>(null);
@@ -59,14 +58,6 @@ export default function PhotoReader() {
     generation.current++;
     if (busy) { session.current?.dispose(); session.current = null; }
     clearPhoto(); startedAt.current = null; pickerOpenedAt.current = null; setAttempts(0); setIncludesPhotoSelection(true); setStatus('idle');
-  }
-  function changeEngine(value: OcrEngine) {
-    generation.current++;
-    session.current?.dispose(); session.current = null;
-    clearResult(); scanned.current = false; setEngine(value);
-    startedAt.current = image ? performance.now() : null;
-    setIncludesPhotoSelection(!image);
-    setAttempts(image ? 1 : 0); setStatus(image ? 'selecting' : 'idle');
   }
   function openPicker(event: React.MouseEvent<HTMLInputElement>) {
     event.currentTarget.value = '';
@@ -109,8 +100,8 @@ export default function PhotoReader() {
     try {
       const prepared = await image.prepare(whole ? undefined : strokes);
       if (id !== generation.current) return;
-      session.current ??= createOcrSession(engine);
-      const recognized = await session.current.recognize(prepared.pixels, prepared.blob, value => {
+      session.current ??= createOcrSession();
+      const recognized = await session.current.recognize(prepared.pixels, value => {
         if (id === generation.current) setProgress(value);
       });
       if (id !== generation.current) return;
@@ -151,17 +142,9 @@ export default function PhotoReader() {
           </label>)}
         {busy && <button className={styles.secondary} type="button" onClick={cancel}>Cancel reading</button>}
       </div>
-      <div className={styles.engine}>
-        <label htmlFor="ocr-engine">Reader to try</label>
-        <select id="ocr-engine" value={engine} disabled={busy} onChange={event => changeEngine(event.target.value as OcrEngine)}>
-          <option value="paddle">PaddleOCR</option><option value="tesseract">Tesseract</option>
-        </select>
-        <span>PaddleOCR is selected by default. You can still compare Tesseract.</span>
-      </div>
       <p className={styles.hint}>Photos are processed on your device. Initial downloads can take a while; later scans reuse the loaded reader.</p>
       <p role="status" className={styles.status}>{statusText}</p>
-      {status === 'reading' && <progress aria-label="Photo recognition progress" max={1}
-        value={progress.stage === 'recognizing' ? progress.progress : undefined} />}
+      {status === 'reading' && <progress aria-label="Photo recognition progress" />}
       {error && <p role="alert" className={styles.error}>{error}</p>}
     </section>
     {image && <section className={styles.controls} aria-label="Select text area">
@@ -178,7 +161,7 @@ export default function PhotoReader() {
         {usableMs === null ? <button className={styles.accept} type="button" onClick={() => setUsableMs(performance.now() - startedAt.current!)}>This reading is usable</button>
           : <p role="status">Usable after <strong>{seconds(usableMs)} seconds</strong>. Compare this with your usual workflow.</p>}
         <details><summary>Scan details</summary><dl>
-          <dt>Reader</dt><dd>{engine === 'tesseract' ? 'Tesseract 7, fast Traditional Chinese + English' : 'PaddleOCR 0.4.2, PP-OCRv5 mobile, WASM'}</dd>
+          <dt>Reader</dt><dd>PaddleOCR 0.4.2, PP-OCRv5 mobile, WASM</dd>
           <dt>Preparation of reader</dt><dd>{seconds(result.initializationMs)} seconds{result.reused ? ', already loaded' : ', newly initialized'}</dd>
           <dt>Recognition</dt><dd>{seconds(result.recognitionMs)} seconds</dd>
           <dt>Selected image</dt><dd>{image?.format}, {image?.originalWidth} × {image?.originalHeight}</dd>

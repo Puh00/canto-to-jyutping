@@ -26,8 +26,6 @@ for (const asset of lock.assets) {
 }
 if (record) await writeFile(lockPath, JSON.stringify(lock, null, 2) + '\n');
 const copies = [
-  ['node_modules/tesseract.js/dist', 'tesseract', name => name === 'worker.min.js'],
-  ['node_modules/tesseract.js-core', 'tesseract', name => name.endsWith('.wasm.js')],
   ['node_modules/onnxruntime-web/dist', 'ort', name => /^ort-wasm-simd-threaded\.jsep\.(wasm|mjs)$/.test(name)],
 ];
 const inventory = lock.assets.map(asset => ({ path: asset.path, bytes: asset.bytes, sha256: asset.sha256 }));

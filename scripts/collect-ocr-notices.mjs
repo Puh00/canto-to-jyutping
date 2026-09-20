@@ -11,11 +11,10 @@ for (const [name,url] of upstream) {
   if (!response.ok) throw new Error(url + ': ' + response.status);
   await writeFile('docs/licenses/' + name, await response.text());
 }
-let notices = (await readFile('public/notices.txt','utf8')).split('\nOCR TRIAL DEPENDENCIES\n')[0];
-notices += '\nOCR TRIAL DEPENDENCIES\n\n';
-notices += 'Tesseract.js 7.0.0 and tesseract.js-core 7.0.0; chi_tra and eng fast language data from naptha/tessdata commit 806cd9adc8c6e8abc11c782db1818c990576bebc. Model asset URLs and checksums are in scripts/ocr-assets.json.\n\n';
+let notices = (await readFile('public/notices.txt','utf8')).split(/\nOCR (?:TRIAL )?DEPENDENCIES\n/)[0];
+notices += '\nOCR DEPENDENCIES\n\n';
 notices += 'PaddleOCR.js 0.4.2 and unmodified PP-OCRv5_mobile_det/rec ONNX archives, developed by PaddlePaddle. Model cards: https://huggingface.co/PaddlePaddle/PP-OCRv5_mobile_det and https://huggingface.co/PaddlePaddle/PP-OCRv5_mobile_rec. Model cards identify Apache-2.0 licensing.\n\n';
-for (const pkg of ['tesseract.js','tesseract.js-core','@techstark/opencv-js','idb-keyval','wasm-feature-detect','zlibjs','is-url','bmp-js','js-yaml','regenerator-runtime','flatbuffers','guid-typescript','long','platform','protobufjs']) {
+for (const pkg of ['@techstark/opencv-js','js-yaml','argparse','flatbuffers','guid-typescript','long','platform','protobufjs']) {
   const folder = 'node_modules/' + pkg;
   const names = await readdir(folder);
   const license = names.find(name => /^licen[cs]e(?:\.|$)/i.test(name));
@@ -24,7 +23,7 @@ for (const pkg of ['tesseract.js','tesseract.js-core','@techstark/opencv-js','id
 for (const [name] of upstream) notices += name + '\n' + await readFile('docs/licenses/'+name,'utf8') + '\n\n';
 const clipper = await readFile('node_modules/clipper-lib/clipper.js','utf8');
 notices += 'clipper-lib\n' + clipper.match(/^(?:\/\*[\s\S]*?\*\/\s*)+/)?.[0] + '\n\n';
-notices += await readFile('node_modules/tesseract.js/dist/worker.min.js.LICENSE.txt','utf8');
+notices = notices.trimEnd() + '\n';
 await writeFile('public/notices.txt', notices);
 console.log('Updated OCR notices: ' + Buffer.byteLength(notices) + ' bytes');
 

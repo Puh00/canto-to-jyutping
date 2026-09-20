@@ -1,7 +1,7 @@
 export type ImagePoint = { x: number; y: number };
 // Points and brush width are fractions of the original image; width is relative to image width.
 export type HighlightStroke = { points: ImagePoint[]; width: number };
-export type PreparedImage = { pixels: ImageData; blob: Blob };
+export type PreparedImage = { pixels: ImageData };
 export type OpenedImage = {
   previewUrl: string;
   originalWidth: number;
@@ -77,9 +77,7 @@ export async function openImage(file: File): Promise<OpenedImage> {
         // Pixels outside the brush are white even inside the combined bounding rectangle.
         context.globalCompositeOperation = 'destination-over';
         context.fillStyle = 'white'; context.fillRect(0, 0, canvas.width, canvas.height);
-        const blob = await new Promise<Blob>((resolve, reject) =>
-          canvas.toBlob(value => value ? resolve(value) : reject(new Error('Could not prepare the photo.')), 'image/png'));
-        return { blob, pixels: context.getImageData(0, 0, canvas.width, canvas.height) };
+        return { pixels: context.getImageData(0, 0, canvas.width, canvas.height) };
       },
     };
   } catch (error) { URL.revokeObjectURL(previewUrl); throw error; }

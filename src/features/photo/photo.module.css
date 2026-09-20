@@ -8,10 +8,6 @@
 .picker input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .picker:focus-within { outline: 3px solid var(--accent); outline-offset: 3px; }
 .picker:has(input:disabled) { opacity: .55; }
-.engine { display: flex; flex-wrap: wrap; gap: 9px; align-items: center; font-size: 13px; }
-.engine label { font-weight: 600; }
-.engine select { font: inherit; border: 1px solid var(--line); border-radius: 6px; min-height: 40px; padding: 6px 12px; color: var(--ink); background: white; }
-.engine span { color: var(--muted); font-size: 12px; }
 .hint, .status, .error { font-size: 12px; line-height: 1.65; }
 .status:empty { display: none; }
 .error { color: #9a3e25; }
@@ -30,7 +26,6 @@
   .controls, .reading, .trial { padding: 19px 16px; }
   .heading h2 { font-size: 24px; }
   .picker { padding: 10px 14px; }
-  .engine span { flex-basis: 100%; }
 }
 
 .areaActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
