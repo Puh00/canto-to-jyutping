@@ -1,10 +1,20 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
+async function setAppearance(page: Page, theme: string) {
+  const toggle = page.getByRole('switch', { name: 'Dark mode', exact: true });
+  if (await toggle.getAttribute('aria-checked') !== String(theme === 'dark')) await toggle.click();
+  await expect(toggle).toHaveAttribute('aria-checked', String(theme === 'dark'));
+  await expect(toggle.locator('span')).toHaveCSS('transform', `matrix(1, 0, 0, 1, ${theme === 'dark' ? 36 : 0}, 0)`);
+}
+
 test('follows the system and remembers only explicit appearance overrides', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/');
-  const appearance = page.getByRole('combobox', { name: 'Appearance' });
-  await expect(appearance).toHaveValue('system');
+  const appearance = page.getByRole('switch', { name: 'Dark mode', exact: true });
+  await expect(appearance).toHaveAttribute('aria-checked', 'true');
+  await expect(appearance).toHaveAttribute('title', 'Dark appearance (system). Switch to light');
+  await expect(appearance.locator('circle')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Use system' })).toHaveCount(0);
   const body = page.locator('body');
   await expect(body).toHaveCSS('background-color', 'rgb(21, 31, 26)');
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
@@ -13,27 +23,52 @@ test('follows the system and remembers only explicit appearance overrides', asyn
 
   await page.emulateMedia({ colorScheme: 'light' });
   await expect(body).toHaveCSS('background-color', 'rgb(246, 245, 239)');
-  await appearance.selectOption('dark');
+  await expect(appearance).toHaveAttribute('aria-checked', 'false');
+  await expect(appearance.locator('circle')).toHaveCount(1);
+  await appearance.focus();
+  await page.keyboard.press('Space');
   await expect(body).toHaveCSS('background-color', 'rgb(21, 31, 26)');
   await page.reload();
-  await expect(appearance).toHaveValue('dark');
+  await expect(appearance).toHaveAttribute('aria-checked', 'true');
   await expect(body).toHaveCSS('background-color', 'rgb(21, 31, 26)');
   await expect(page.getByRole('textbox', { name: 'Chinese text' })).toBeEmpty();
   expect(await page.evaluate(() => ({ local: { ...localStorage }, session: sessionStorage.length })))
     .toEqual({ local: { 'canto-theme': 'dark' }, session: 0 });
 
-  await appearance.selectOption('light');
+  await appearance.focus();
+  await page.keyboard.press('Enter');
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect(body).toHaveCSS('background-color', 'rgb(246, 245, 239)');
   await page.reload();
-  await expect(appearance).toHaveValue('light');
+  await expect(appearance).toHaveAttribute('aria-checked', 'false');
   await expect(body).toHaveCSS('background-color', 'rgb(246, 245, 239)');
-  await appearance.selectOption('system');
-  await expect(body).toHaveCSS('background-color', 'rgb(21, 31, 26)');
-  expect(await page.evaluate(() => localStorage.length)).toBe(0);
-  await page.emulateMedia({ colorScheme: 'light' });
-  await expect(body).toHaveCSS('background-color', 'rgb(246, 245, 239)');
+  await expect(page.getByRole('button', { name: 'Use system' })).toHaveCount(0);
+  expect(await page.evaluate(() => localStorage.getItem('canto-theme'))).toBe('light');
+  await expect(appearance).toHaveAttribute('title', 'Light appearance. Switch to dark');
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+});
+
+test('switch thumb slides between states and respects reduced motion', async ({ page }) => {
+  await page.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
+  await page.goto('/');
+  const appearance = page.getByRole('switch', { name: 'Dark mode', exact: true });
+  const thumb = appearance.locator('span');
+  await expect(appearance).not.toBeChecked();
+  await expect(appearance).toHaveCSS('height', '44px');
+  await expect(thumb).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+  await expect(thumb).toHaveCSS('transition-duration', '0.18s');
+  await appearance.click();
+  await expect(appearance).toBeChecked();
+  await expect(thumb).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 36, 0)');
+  await expect(thumb.locator('circle')).toHaveCount(0);
+  await expectReadable(thumb);
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(thumb).toHaveCSS('transition-duration', '0s');
+  await appearance.click();
+  await expect(appearance).not.toBeChecked();
+  await expect(thumb).toHaveCSS('transform', 'matrix(1, 0, 0, 1, 0, 0)');
+  await expect(thumb.locator('circle')).toHaveCount(1);
+  await expectReadable(thumb);
 });
 
 function contrast(foreground: string, background: string) {
@@ -72,10 +107,9 @@ test('appearance still changes when browser storage is unavailable', async ({ pa
   page.on('pageerror', error => errors.push(error.message));
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/');
-  const appearance = page.getByRole('combobox', { name: 'Appearance' });
-  await appearance.selectOption('dark');
+  await setAppearance(page, 'dark');
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(21, 31, 26)');
-  await appearance.selectOption('system');
+  await setAppearance(page, 'light');
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(246, 245, 239)');
   await page.getByRole('textbox', { name: 'Chinese text' }).fill('銀行');
   await expect(page.getByText('hong4', { exact: true })).toBeVisible();
@@ -97,10 +131,10 @@ test('both themes keep readings legible and photo colors and highlights intact',
   test.setTimeout(120_000);
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/');
-  const appearance = page.getByRole('combobox', { name: 'Appearance' });
+  const appearance = page.getByRole('switch', { name: 'Dark mode', exact: true });
   await page.getByRole('textbox', { name: 'Chinese text' }).fill('銀行');
   for (const theme of ['light', 'dark']) {
-    await appearance.selectOption(theme);
+    await setAppearance(page, theme);
     await appearance.focus();
     await page.keyboard.press('Tab');
     await page.keyboard.press('Shift+Tab');
@@ -130,7 +164,7 @@ test('both themes keep readings legible and photo colors and highlights intact',
   await picker.setInputFiles({ name: 'broken.png', mimeType: 'image/png', buffer: Buffer.from('broken') });
   await expect(page.getByRole('alert')).toBeVisible();
   for (const theme of ['light', 'dark']) {
-    await appearance.selectOption(theme);
+    await setAppearance(page, theme);
     await expectReadable(page.getByRole('alert'));
     await expectReadable(page.getByText('Choose an image', { exact: true }));
   }
@@ -139,9 +173,9 @@ test('both themes keep readings legible and photo colors and highlights intact',
   const image = page.getByRole('img', { name: 'Selected photo prepared for reading' });
   await expect(image).toBeVisible();
   const darkPhoto = await photoPixels(page, image);
-  await appearance.selectOption('light');
+  await setAppearance(page, 'light');
   expect((await photoPixels(page, image)).equals(darkPhoto)).toBe(true);
-  await appearance.selectOption('dark');
+  await setAppearance(page, 'dark');
   await image.scrollIntoViewIfNeeded();
   const bounds = (await image.boundingBox())!;
   await page.mouse.move(bounds.x + bounds.width * .075, bounds.y + bounds.height * .2);
@@ -149,9 +183,9 @@ test('both themes keep readings legible and photo colors and highlights intact',
   await page.mouse.move(bounds.x + bounds.width * .285, bounds.y + bounds.height * .2, { steps: 8 });
   await page.mouse.up();
   const darkHighlight = await photoPixels(page, image);
-  await appearance.selectOption('light');
+  await setAppearance(page, 'light');
   expect((await photoPixels(page, image)).equals(darkHighlight)).toBe(true);
-  await appearance.selectOption('dark');
+  await setAppearance(page, 'dark');
   await page.getByRole('button', { name: 'Read highlighted text', exact: true }).click();
   const reading = page.getByRole('region', { name: 'Photo reading' });
   await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 90_000 });
@@ -159,7 +193,7 @@ test('both themes keep readings legible and photo colors and highlights intact',
   await expect(reading.getByText('咖', { exact: true })).toHaveCount(0);
   await expectReadable(reading.getByText('ngau4', { exact: true }));
   await page.screenshot({ path: test.info().outputPath('photo-dark.png'), fullPage: true });
-  await appearance.selectOption('light');
+  await setAppearance(page, 'light');
   await expect(reading.getByText('ngau4', { exact: true })).toBeVisible();
   await page.screenshot({ path: test.info().outputPath('photo-light.png'), fullPage: true });
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
@@ -178,8 +212,7 @@ test('transparent photos retain their colors when appearance changes', async ({ 
     context.fillStyle = '#3060d0'; context.fillRect(230, 100, 70, 50);
     return canvas.toDataURL('image/png').split(',')[1]!;
   });
-  const appearance = page.getByRole('combobox', { name: 'Appearance' });
-  await appearance.selectOption('dark');
+  await setAppearance(page, 'dark');
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
   await page.getByLabel('Choose an image', { exact: true }).setInputFiles({
     name: 'transparent.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64'),
@@ -187,11 +220,11 @@ test('transparent photos retain their colors when appearance changes', async ({ 
   const image = page.getByRole('img', { name: 'Selected photo prepared for reading' });
   await expect(image).toBeVisible();
   const darkPhoto = await photoPixels(page, image);
-  await appearance.selectOption('light');
+  await setAppearance(page, 'light');
   expect((await photoPixels(page, image)).equals(darkPhoto)).toBe(true);
   const stage = page.getByRole('group', { name: 'Highlight text in photo' });
   await stage.press('+');
   const lightZoom = await photoPixels(page, stage);
-  await appearance.selectOption('dark');
+  await setAppearance(page, 'dark');
   expect((await photoPixels(page, stage)).equals(lightZoom)).toBe(true);
 });

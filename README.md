@@ -1,21 +1,23 @@
 # Canto
 
-A static Cantonese reading tool for people who speak the language and want help reading Chinese characters. Paste traditional Chinese or try a photo to see Jyutping beneath each character. Tap an underlined reading to inspect alternatives.
+Read traditional Chinese in Cantonese. Paste text to see Jyutping beneath each character, or choose a photo and highlight the words to read. Tap a character to view alternative pronunciations. Suggested readings can be wrong.
 
-Built with React, TypeScript, Vite, CSS Modules and ToJyutping. The photo reader uses official PaddleOCR.js. Conversion uses a bundled dictionary on the device. The app has no backend, analytics, account, or stored input. Loading the site initially requires a connection; guaranteed offline loading is deferred.
+Photo recognition runs on your device with PaddleOCR. Text and photos are not sent to an application server or saved by the app. The first scan downloads the OCR models; later scans reuse the loaded reader. Guaranteed offline use is not supported.
+
+The sun/moon switch follows your system appearance until you choose a theme, then remembers your choice.
 
 ## Run locally
 
-Use Node.js 24 and npm. This implementation was verified with Node 24.19.0 and npm 12.0.2.
+Use Node.js 24 and npm. Verified with Node 24.19.0 and npm 12.0.2.
 
 ```sh
 npm ci
 npm run dev
 ```
 
-Open the local address printed by Vite. No environment variables or API keys are needed. The first dev/build run downloads the pinned OCR model files and copies runtime assets into ignored public/ocr/. These are build-time downloads; the browser loads PaddleOCR only when a photo is scanned.
+Open the URL printed by Vite. No account, API key, or environment variables are required. Development and build commands prepare the checksum-pinned OCR models and WASM runtime automatically.
 
-## Build and verify
+## Build and test
 
 ```sh
 npm run typecheck
@@ -26,16 +28,16 @@ npm run test:e2e
 npm run preview
 ```
 
-The browser suite serves the production build, so run the build first. It tests desktop Chromium and mobile WebKit with an iPhone 14 Pro viewport. Browser binaries download once per Playwright version. Mobile emulation does not replace a physical iPhone check.
+Browser tests use the production build and cover desktop Chromium and mobile WebKit. Build before running them.
 
 Deploy the contents of `dist/` to a static HTTPS host. Relative asset paths support deployment beneath a directory. Keep `notices.txt` with the build. A hosting provider has not been selected.
 
-## Code layout
+## Photo controls
 
-- `src/pronunciation/` accepts whole text and returns source spans, contextual readings and alternatives. It has no React, storage or networking dependency. Offsets use JavaScript UTF-16 indexing.
-- `src/features/reader/` owns input, rendering and the pronunciation dialog. Editing clears the selected character.
-- `src/features/photo/` owns the photo trial, image selection, cancellation and time until the user marks a reading usable.
-- `src/ocr/` prepares image pixels and runs PaddleOCR in a worker.
-- `src/styles/` contains shared typography, colors and page styles; reader styles use a CSS Module.
-- `tests/fixtures/` records dictionary-sourced examples and accepted variants. Unit tests use the real conversion library.
-- `tests/e2e/` checks the built site, including keyboard focus, wrapping and conversion without new network requests.
+Brush over the words to recognize, then select **Read highlighted text**. **Read whole image** scans the entire photo. Use pinch or wheel zoom, the Brush/Move toolbar, undo, brush size, and Clear to adjust the selection.
+
+With the photo focused, `+` and `-` zoom, `0` resets, arrow keys move the brush or photo, and Space toggles painting.
+
+## Dependencies and notices
+
+Built with React, TypeScript, Vite, ToJyutping, and PaddleOCR. Third-party notices are in [public/notices.txt](public/notices.txt), with additional license texts in [docs/licenses](docs/licenses/). Preserve these notices when distributing the build. Model URLs and checksums are pinned in [scripts/ocr-assets.json](scripts/ocr-assets.json).
