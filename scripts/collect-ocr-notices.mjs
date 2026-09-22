@@ -1,15 +1,15 @@
-import { readFile, readdir, mkdir, writeFile } from 'node:fs/promises';
+import { readFile, readdir, writeFile } from 'node:fs/promises';
 const upstream = [
   ['PaddleOCR-APACHE.txt','https://raw.githubusercontent.com/PaddlePaddle/PaddleOCR/e5046169b225bcdfbe25d45b4e809ff0f1a69c2c/LICENSE'],
   ['ONNX-MIT.txt','https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/LICENSE'],
   ['ONNX-third-party.txt','https://raw.githubusercontent.com/microsoft/onnxruntime/v1.30.0/ThirdPartyNotices.txt'],
   ['Boost.txt','https://www.boost.org/LICENSE_1_0.txt'],
 ];
-await mkdir('docs/licenses', {recursive:true});
+const upstreamNotices = [];
 for (const [name,url] of upstream) {
   const response = await fetch(url);
   if (!response.ok) throw new Error(url + ': ' + response.status);
-  await writeFile('docs/licenses/' + name, await response.text());
+  upstreamNotices.push([name, await response.text()]);
 }
 let notices = (await readFile('public/notices.txt','utf8')).split(/\nOCR (?:TRIAL )?DEPENDENCIES\n/)[0];
 notices += '\nOCR DEPENDENCIES\n\n';
@@ -20,10 +20,9 @@ for (const pkg of ['@techstark/opencv-js','js-yaml','argparse','flatbuffers','gu
   const license = names.find(name => /^licen[cs]e(?:\.|$)/i.test(name));
   if (license) notices += pkg + '\n' + await readFile(folder + '/' + license,'utf8') + '\n\n';
 }
-for (const [name] of upstream) notices += name + '\n' + await readFile('docs/licenses/'+name,'utf8') + '\n\n';
+for (const [name, license] of upstreamNotices) notices += name + '\n' + license + '\n\n';
 const clipper = await readFile('node_modules/clipper-lib/clipper.js','utf8');
 notices += 'clipper-lib\n' + clipper.match(/^(?:\/\*[\s\S]*?\*\/\s*)+/)?.[0] + '\n\n';
 notices = notices.trimEnd() + '\n';
 await writeFile('public/notices.txt', notices);
 console.log('Updated OCR notices: ' + Buffer.byteLength(notices) + ' bytes');
-
