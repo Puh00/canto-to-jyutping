@@ -11,6 +11,12 @@ test('brush popover adjusts future strokes without drawing or moving the photo',
   const paths = stage.locator('svg path');
   await expect(brush).toHaveAttribute('aria-expanded', 'false');
   await expect(slider).toBeHidden();
+  if (!isMobile) {
+    await brush.hover();
+    await page.mouse.wheel(0, -300);
+  }
+  await expect(page.getByLabel('Photo zoom', { exact: true })).toHaveText('100%');
+  await expect(paths).toHaveCount(0);
   await stage.press('Space');
   await stage.press('ArrowRight');
   await stage.press('Enter');
@@ -56,6 +62,7 @@ test('brush popover adjusts future strokes without drawing or moving the photo',
   expect(Number(await paths.nth(1).getAttribute('stroke-width'))).toBeGreaterThan(Number(firstStroke));
   await page.getByRole('button', { name: 'Undo highlight', exact: true }).click();
   await expect(paths).toHaveCount(1);
+  await page.getByRole('button', { name: 'Close photo editor' }).click();
   await picker.setInputFiles('tests/fixtures/menu-clean.png');
   await brush.click();
   await expect(slider).toHaveValue('12');
@@ -75,8 +82,10 @@ test('brush panel stays in the viewport for narrow and short photos in both them
     }, { width, height });
     await page.getByLabel('Choose an image', { exact: true }).setInputFiles({ name: shape + '.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
     for (const theme of ['light', 'dark']) {
+      await page.getByRole('button', { name: 'Close photo editor' }).click();
       const toggle = page.getByRole('switch', { name: 'Dark mode', exact: true });
       if (await toggle.getAttribute('aria-checked') !== String(theme === 'dark')) await toggle.click();
+      await page.getByRole('button', { name: 'Continue editing', exact: true }).click();
       const brush = page.getByRole('button', { name: 'Brush size', exact: true });
       await brush.click();
       const panel = page.locator(`[id="${await brush.getAttribute('aria-controls')}"]`);
@@ -93,5 +102,6 @@ test('brush panel stays in the viewport for narrow and short photos in both them
       await page.screenshot({ path: test.info().outputPath(`${shape}-${theme}.png`), fullPage: true });
       await page.getByRole('slider', { name: 'Brush size', exact: true }).press('Escape');
     }
+    await page.getByRole('button', { name: 'Close photo editor' }).click();
   }
 });

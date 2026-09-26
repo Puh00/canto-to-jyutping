@@ -1,3 +1,5 @@
+import { highlightBounds } from './highlight-bounds';
+
 export type ImagePoint = { x: number; y: number };
 // Points and brush width are fractions of the original image; width is relative to image width.
 export type HighlightStroke = { points: ImagePoint[]; width: number };
@@ -28,22 +30,7 @@ export async function openImage(file: File): Promise<OpenedImage> {
       previewUrl, originalWidth, originalHeight, format: file.type || 'unspecified image',
       dispose: () => { URL.revokeObjectURL(previewUrl); image.src = ''; },
       async prepare(strokes) {
-        if (strokes && !strokes.some(stroke => stroke.points.length)) throw new Error('Highlight some text first.');
-        let left = 0, top = 0, right = originalWidth, bottom = originalHeight;
-        if (strokes) {
-          left = originalWidth; top = originalHeight; right = 0; bottom = 0;
-          for (const stroke of strokes) for (const point of stroke.points) {
-            const radius = stroke.width * originalWidth / 2;
-            left = Math.min(left, point.x * originalWidth - radius);
-            top = Math.min(top, point.y * originalHeight - radius);
-            right = Math.max(right, point.x * originalWidth + radius);
-            bottom = Math.max(bottom, point.y * originalHeight + radius);
-          }
-          // A little white space around the selected text helps recognition at crop edges.
-          left = Math.max(0, Math.floor(left - 8)); top = Math.max(0, Math.floor(top - 8));
-          right = Math.min(originalWidth, Math.ceil(right + 8)); bottom = Math.min(originalHeight, Math.ceil(bottom + 8));
-        }
-        const width = Math.max(1, right - left), height = Math.max(1, bottom - top);
+        const { left, top, width, height } = highlightBounds(originalWidth, originalHeight, strokes);
         const scale = Math.min(1, 1600 / Math.max(width, height));
         const canvas = document.createElement('canvas');
         canvas.width = Math.max(1, Math.round(width * scale));

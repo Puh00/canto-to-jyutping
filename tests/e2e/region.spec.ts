@@ -24,8 +24,11 @@ test('reads highlighted lines and excludes text between them', async ({ page }) 
   await expect(undo).toBeVisible();
   const stageBounds = (await page.getByRole('group', { name: 'Highlight text in photo' }).boundingBox())!;
   const undoBounds = (await undo.boundingBox())!;
-  expect(undoBounds.x).toBeGreaterThan(stageBounds.x + stageBounds.width - 60);
-  expect(undoBounds.y).toBeLessThan(stageBounds.y + 20);
+  expect(undoBounds.y).toBeCloseTo(stageBounds.y + 12, 0);
+  const submitted = await page.getByRole('group', { name: 'Highlight text in photo' }).locator('svg path')
+    .evaluateAll(paths => paths.map(path => ({ d: path.getAttribute('d'), width: path.getAttribute('stroke-width') })));
+  const originalUrl = await image.getAttribute('src');
+  await page.getByRole('group', { name: 'Highlight text in photo' }).press('+');
   await read.click();
   const reading = page.getByRole('region', { name: 'Photo reading' });
   await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 90_000 });
@@ -33,13 +36,31 @@ test('reads highlighted lines and excludes text between them', async ({ page }) 
   await expect(reading.getByText('旺', { exact: true })).toBeVisible();
   await expect(reading.getByText('咖', { exact: true })).toHaveCount(0);
   await expect(reading.getByText('啡', { exact: true })).toHaveCount(0);
+  const source = reading.getByRole('img', { name: 'Photo used for this reading' });
+  const crop = (await source.getAttribute('viewBox'))!.split(' ').map(Number);
+  for (const [index, expected] of [7, 36, 346, 396].entries()) expect(Math.abs(crop[index]! - expected)).toBeLessThanOrEqual(2);
+  await expect(source.locator('image')).toHaveAttribute('href', originalUrl!);
+  await expect(source.locator('mask')).toHaveCount(0);
+  expect(await source.locator('path').evaluateAll(paths => paths.map(path => ({
+    d: path.getAttribute('d'), width: path.getAttribute('stroke-width'),
+  })))).toEqual(submitted);
   await page.screenshot({ path: test.info().outputPath('highlighted-lines.png'), fullPage: true });
+  const editPreview = page.getByRole('button', { name: 'Edit highlights in photo', exact: true });
+  const scroll = await page.evaluate(() => scrollY);
+  await editPreview.click();
+  await expect(page.getByLabel('Photo zoom', { exact: true })).toHaveText('150%');
+  await page.getByRole('button', { name: 'Close photo editor' }).click();
+  await expect(editPreview).toBeFocused();
+  expect(await page.evaluate(() => scrollY)).toBe(scroll);
+  await expect(source).toHaveAttribute('viewBox', crop.join(' '));
+  await editPreview.press('Enter');
   await undo.click();
   await expect(reading).toHaveCount(0);
   await expect(undo).toBeVisible();
   await read.click();
   await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect(reading.getByText('旺', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Edit highlights in photo', exact: true }).click();
   await undo.click();
   await expect(reading).toHaveCount(0);
   await expect(read).toBeDisabled();
@@ -47,6 +68,8 @@ test('reads highlighted lines and excludes text between them', async ({ page }) 
   await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
   await expect(reading.getByText('咖', { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect(reading.getByText('旺', { exact: true })).toBeVisible();
+  await expect(source).toHaveAttribute('viewBox', '0 0 1000 520');
+  await expect(source.locator('path, circle')).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
 
 });

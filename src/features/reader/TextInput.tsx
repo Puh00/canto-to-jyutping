@@ -11,15 +11,15 @@ export function TextInput({ value, onChange, inputRef }: Props) {
   return (
     <section className={styles.inputCard} aria-labelledby="input-title">
       <div className={styles.cardHeading}>
-        <label id="input-title" htmlFor="chinese-text">Chinese text</label>
+        <label id="input-title" htmlFor="cantonese-text">Cantonese text</label>
         {value && <button type="button" className={styles.clear} onClick={() => { onChange(''); inputRef.current?.focus(); }}>Clear text <span aria-hidden="true">×</span></button>}
       </div>
       <textarea
-        id="chinese-text"
+        id="cantonese-text"
         ref={inputRef}
         value={value}
         onChange={event => onChange(event.target.value)}
-        placeholder={'Paste or type Chinese characters here…'}
+        placeholder={'Paste or type Cantonese characters here…'}
         spellCheck={false}
         autoComplete="off"
         autoCapitalize="off"

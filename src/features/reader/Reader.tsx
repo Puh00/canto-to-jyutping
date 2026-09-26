@@ -36,7 +36,7 @@ export function Reader() {
                 <div className={styles.exampleCharacters} aria-hidden="true">
                   <span>你<small>nei5</small></span><span>好<small>hou2</small></span>
                 </div>
-                <p>Paste Chinese text to see its Jyutping.</p>
+                <p>Paste Cantonese text to see its Jyutping.</p>
               </div>
             )}
           </div>
@@ -51,4 +51,3 @@ export function Reader() {
     </div>
   );
 }
-

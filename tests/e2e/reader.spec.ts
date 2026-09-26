@@ -4,7 +4,7 @@ test('reads text, inspects alternatives with keyboard, and resets without persis
   const errors: string[] = [];
   page.on('pageerror', error => errors.push(error.message));
   await page.goto('/');
-  const input = page.getByRole('textbox', { name: 'Chinese text' });
+  const input = page.getByRole('textbox', { name: 'Cantonese text' });
   await expect(input).toBeEmpty();
   await input.fill('銀行 行路\nCoffee $28');
   const output = page.getByRole('region', { name: 'Jyutping' });
@@ -33,7 +33,7 @@ test('reads text, inspects alternatives with keyboard, and resets without persis
 
 test('handles missing readings and touch dismissal', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('textbox', { name: 'Chinese text' }).fill('𠀀');
+  await page.getByRole('textbox', { name: 'Cantonese text' }).fill('𠀀');
   await page.getByRole('button', { name: '𠀀. No pronunciation found' }).click();
   const dialog = page.getByRole('dialog');
   await expect(dialog.getByText('No pronunciation found.', { exact: true })).toBeVisible();
@@ -43,7 +43,7 @@ test('handles missing readings and touch dismissal', async ({ page }) => {
 
 test('wraps long readings without horizontal overflow and keeps readings beneath characters', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('textbox', { name: 'Chinese text' }).fill('咖啡 牛肉麵 銀行 行路 旺角\n'.repeat(5) + 'Coffee $28 👩🏽‍💻');
+  await page.getByRole('textbox', { name: 'Cantonese text' }).fill('咖啡 牛肉麵 銀行 行路 旺角\n'.repeat(5) + 'Coffee $28 👩🏽‍💻');
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   expect(overflow).toBe(false);
   const character = page.getByRole('button', { name: '咖, gaa3. View other readings' }).first();
@@ -61,7 +61,7 @@ test('converts after initial load without making network requests or using app s
   await page.waitForLoadState('networkidle');
   await page.context().setOffline(true);
   page.on('request', request => requests.push(request.url()));
-  await page.getByRole('textbox', { name: 'Chinese text' }).fill('咖啡 Coffee $28');
+  await page.getByRole('textbox', { name: 'Cantonese text' }).fill('咖啡 Coffee $28');
   await expect(page.getByRole('region', { name: 'Jyutping' }).getByText('gaa3', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '咖, gaa3. View other readings' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
@@ -72,7 +72,7 @@ test('converts after initial load without making network requests or using app s
 test('preserves variation selectors and combining marks inside the displayed character', async ({ page }) => {
   await page.goto('/');
   const characters = ['神\uFE00', '神\u{E0100}', '神\u0301'];
-  await page.getByRole('textbox', { name: 'Chinese text' }).fill(characters.join(' '));
+  await page.getByRole('textbox', { name: 'Cantonese text' }).fill(characters.join(' '));
   const output = page.getByRole('region', { name: 'Jyutping' });
   for (const character of characters) {
     await expect(output.getByText(character, { exact: true })).toBeVisible();

@@ -2,6 +2,16 @@
 .controls, .reading { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 25px; min-width: 0; }
 .controls > p { color: var(--muted); font-size: 14px; line-height: 1.65; }
 .pickers { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 0; }
+.pickerChoices, .photoActions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.photoHeader { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
+.reading .photoHeader { margin-bottom: 20px; }
+.reading .photoHeader h2 { margin: 0; }
+.newPhoto { position: relative; }
+.newPhoto > button { padding: 10px 12px; font-size: 14px; white-space: nowrap; }
+.pickerDropdown { position: fixed; z-index: 3; display: grid; gap: 6px; width: min(220px, calc(100vw - 64px)); padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: 0 4px 16px var(--dialog-shadow); }
+.pickerDropdown[hidden] { display: none; }
+.pickerDropdown .picker { background: var(--surface); color: var(--green); padding: 10px 12px; }
+.pickerDropdown .picker:hover { background: var(--paper); }
 .picker { position: relative; display: inline-flex; align-items: center; min-height: 46px; padding: 10px 20px; background: var(--green); border-radius: 8px; color: var(--on-green); font-size: 14px; cursor: pointer; overflow: hidden; }
 .picker input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .picker:focus-within { outline: 3px solid var(--accent); outline-offset: 3px; }
@@ -12,7 +22,21 @@
 .controls progress { width: 100%; accent-color: var(--green); }
 .reading h2 { margin: 0 0 20px; font-size: 16px; }
 .hint { color: var(--muted); }
-.secondary, .accept { border: 1px solid var(--line); border-radius: 7px; padding: 10px 15px; min-height: 42px; font: inherit; color: var(--green); background: transparent; }
+.comparison { position: relative; }
+.sourcePhoto { position: sticky; top: max(8px, env(safe-area-inset-top)); z-index: 1; display: block; align-self: start; width: 100%; max-height: 35dvh; padding: 0; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--green); overflow: hidden; }
+.sourceImage { display: block; width: 100%; height: auto; max-height: calc(35dvh - 46px); background: #fff; }
+.sourceLabel { display: flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 12px; font-size: 14px; }
+.sourcePhoto:hover { border-color: var(--control-border); }
+.transcription { min-width: 0; margin-top: 20px; }
+.transcription button { scroll-margin-top: calc(35dvh + 24px); }
+@media (min-width: 900px), (min-width: 600px) and (max-height: 500px) {
+  .comparison { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 24px; align-items: start; }
+  .sourcePhoto { max-height: calc(100dvh - 32px); }
+  .sourceImage { max-height: calc(100dvh - 78px); }
+  .transcription { margin-top: 0; }
+  .transcription button { scroll-margin-top: 24px; }
+}
+.secondary, .accept { border: 1px solid var(--line); border-radius: 7px; padding: 10px 15px; min-height: 44px; font: inherit; color: var(--green); background: transparent; }
 .accept { color: var(--on-green); background: var(--green); }
 @media (max-width: 680px) {
   .controls, .reading { padding: 19px 16px; }
@@ -23,3 +47,26 @@
 .photo button:disabled { opacity: .55; cursor: default; }
 
 .controls h2 { font: 600 16px/1.5 var(--sans); margin: 0; }
+
+.editor { position: fixed; inset: 0; width: 100%; max-width: none; height: 100dvh; max-height: none; margin: 0; border: 0; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); background: var(--surface); color: var(--ink); overflow: auto; overscroll-behavior: contain; }
+.editor[open] { display: grid; grid-template-rows: auto minmax(160px, 1fr) auto; }
+.editor::backdrop { background: var(--paper); }
+.editorHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 12px 4px; }
+.editorHeader h2 { margin: 0; font: 600 16px/1.4 var(--sans); }
+.editorFooter { border-top: 1px solid var(--line); padding: 8px 12px 12px; }
+.editorFooter .status, .editorFooter .error { margin: 0 0 8px; }
+.editorFooter .areaActions { margin: 0; }
+.editorFooter progress { display: block; width: 100%; height: 8px; margin: 0 0 8px; accent-color: var(--green); }
+.editorFooter button { font-size: 14px; }
+@media (max-width: 420px) {
+  .editorFooter .areaActions { display: grid; grid-template-columns: 1fr; gap: 6px; }
+}
+@media (min-width: 600px) and (max-height: 500px) {
+  .editor[open] { grid-template-rows: auto minmax(60px, 1fr) auto; }
+  .editorHeader { justify-content: flex-end; padding: 4px 12px; }
+  .editorHeader h2 { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .editorFooter { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+  .editorFooter .status { flex: 1 1 200px; margin: 0; }
+  .editorFooter .areaActions { flex: 0 0 auto; }
+  .editorFooter .error, .editorFooter progress { flex-basis: 100%; }
+}

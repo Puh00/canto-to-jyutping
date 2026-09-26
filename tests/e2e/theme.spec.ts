@@ -1,10 +1,13 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
 
 async function setAppearance(page: Page, theme: string) {
+  const editing = await page.getByRole('button', { name: 'Close photo editor' }).isVisible();
+  if (editing) await page.getByRole('button', { name: 'Close photo editor' }).click();
   const toggle = page.getByRole('switch', { name: 'Dark mode', exact: true });
   if (await toggle.getAttribute('aria-checked') !== String(theme === 'dark')) await toggle.click();
   await expect(toggle).toHaveAttribute('aria-checked', String(theme === 'dark'));
   await expect(toggle.locator('span')).toHaveCSS('transform', `matrix(1, 0, 0, 1, ${theme === 'dark' ? 36 : 0}, 0)`);
+  if (editing) await page.getByRole('button', { name: 'Continue editing', exact: true }).click();
 }
 
 test('follows the system and remembers only explicit appearance overrides', async ({ page }) => {
@@ -18,7 +21,7 @@ test('follows the system and remembers only explicit appearance overrides', asyn
   const body = page.locator('body');
   await expect(body).toHaveCSS('background-color', 'rgb(20, 37, 29)');
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
-  await page.getByRole('textbox', { name: 'Chinese text' }).fill('銀行');
+  await page.getByRole('textbox', { name: 'Cantonese text' }).fill('銀行');
   await expect(page.getByText('hong4', { exact: true })).toBeVisible();
 
   await page.emulateMedia({ colorScheme: 'light' });
@@ -31,7 +34,7 @@ test('follows the system and remembers only explicit appearance overrides', asyn
   await page.reload();
   await expect(appearance).toHaveAttribute('aria-checked', 'true');
   await expect(body).toHaveCSS('background-color', 'rgb(20, 37, 29)');
-  await expect(page.getByRole('textbox', { name: 'Chinese text' })).toBeEmpty();
+  await expect(page.getByRole('textbox', { name: 'Cantonese text' })).toBeEmpty();
   expect(await page.evaluate(() => ({ local: { ...localStorage }, session: sessionStorage.length })))
     .toEqual({ local: { 'canto-theme': 'dark' }, session: 0 });
 
@@ -99,13 +102,13 @@ async function expectReadable(locator: Locator) {
 
 test('compact reader keeps examples useful and guidance contextual in both themes', async ({ page }) => {
   await page.goto('/');
-  const input = page.getByRole('textbox', { name: 'Chinese text' });
+  const input = page.getByRole('textbox', { name: 'Cantonese text' });
   for (const theme of ['light', 'dark']) {
     await setAppearance(page, theme);
-    await expect(page.getByRole('heading', { name: 'Chinese to Jyutping' })).toBeVisible();
-    await expect(page.getByText('Paste Chinese text to see its Jyutping.')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Cantonese to Jyutping' })).toBeVisible();
+    await expect(page.getByText('Paste Cantonese text to see its Jyutping.')).toBeVisible();
     await expect(page.getByText('Suggested readings may be incorrect.')).toHaveCount(0);
-    await expectReadable(page.getByText('Paste Chinese text to see its Jyutping.'));
+    await expectReadable(page.getByText('Paste Cantonese text to see its Jyutping.'));
     await expectReadable(page.getByText('Text and photos are processed on your device.'));
     await page.screenshot({ path: test.info().outputPath('empty-' + theme + '.png'), fullPage: true });
     await input.fill('Coffee $28');
@@ -134,18 +137,21 @@ test('appearance still changes when browser storage is unavailable', async ({ pa
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(20, 37, 29)');
   await setAppearance(page, 'light');
   await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(245, 241, 231)');
-  await page.getByRole('textbox', { name: 'Chinese text' }).fill('銀行');
+  await page.getByRole('textbox', { name: 'Cantonese text' }).fill('銀行');
   await expect(page.getByText('hong4', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
 async function photoPixels(page: Page, image: Locator) {
+  await page.getByRole('button', { name: 'Close photo editor' }).focus();
   // Clip inside the image. Fractional bounds can include one row of the themed page beneath it.
   const clip = await image.evaluate(element => {
     const rect = element.getBoundingClientRect();
-    const x = Math.ceil(rect.left + scrollX) + 1;
-    const y = Math.ceil(rect.top + scrollY) + 1;
-    return { x, y, width: Math.floor(rect.right + scrollX) - x - 1, height: Math.floor(rect.bottom + scrollY) - y - 1 };
+    const viewport = element.closest('[role="group"]')!.getBoundingClientRect();
+    const x = Math.ceil(Math.max(rect.left, viewport.left) + scrollX) + 1;
+    const y = Math.ceil(Math.max(rect.top, viewport.top) + scrollY) + 1;
+    return { x, y, width: Math.floor(Math.min(rect.right, viewport.right) + scrollX) - x - 1,
+      height: Math.floor(Math.min(rect.bottom, viewport.bottom) + scrollY) - y - 1 };
   });
   return page.screenshot({ fullPage: true, clip });
 }
@@ -155,7 +161,7 @@ test('both themes keep readings legible and photo colors and highlights intact',
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/');
   const appearance = page.getByRole('switch', { name: 'Dark mode', exact: true });
-  await page.getByRole('textbox', { name: 'Chinese text' }).fill('銀行');
+  await page.getByRole('textbox', { name: 'Cantonese text' }).fill('銀行');
   for (const theme of ['light', 'dark']) {
     await setAppearance(page, theme);
     await appearance.focus();
@@ -248,7 +254,8 @@ test('transparent photos retain their colors when appearance changes', async ({ 
   expect((await photoPixels(page, image)).equals(darkPhoto)).toBe(true);
   const stage = page.getByRole('group', { name: 'Highlight text in photo' });
   await stage.press('+');
-  const lightZoom = await photoPixels(page, stage);
+  // The surrounding empty space follows the theme; compare only visible image pixels.
+  const lightZoom = await photoPixels(page, image);
   await setAppearance(page, 'dark');
-  expect((await photoPixels(page, stage)).equals(lightZoom)).toBe(true);
+  expect((await photoPixels(page, image)).equals(lightZoom)).toBe(true);
 });

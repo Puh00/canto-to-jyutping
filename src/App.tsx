@@ -19,7 +19,7 @@ export function App() {
       </header>
       <main>
         <div className="intro">
-          <h1>Chinese to Jyutping</h1>
+          <h1>Cantonese to Jyutping</h1>
         </div>
         <nav className="reader-modes" aria-label="Reading method">
           <button type="button" aria-pressed={mode === 'text'} onClick={() => setMode('text')}>Read text</button>

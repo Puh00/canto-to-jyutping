@@ -4,7 +4,7 @@ import { Reader } from './Reader';
 
 it('automatically annotates editable text and removes output when cleared', () => {
   render(<Reader />);
-  const input = screen.getByRole('textbox', { name: 'Chinese text' });
+  const input = screen.getByRole('textbox', { name: 'Cantonese text' });
   expect(input).toHaveValue('');
   fireEvent.change(input, { target: { value: '銀行\nCoffee $28' } });
   const output = screen.getByRole('region', { name: 'Jyutping' });
@@ -20,7 +20,7 @@ it('opens alternative readings without changing the selected pronunciation', asy
   const { default: userEvent } = await import('@testing-library/user-event');
   const user = userEvent.setup();
   render(<Reader />);
-  await user.type(screen.getByRole('textbox', { name: 'Chinese text' }), '銀行');
+  await user.type(screen.getByRole('textbox', { name: 'Cantonese text' }), '銀行');
   await user.click(screen.getByRole('button', { name: '行, hong4. View other readings' }));
   const dialog = screen.getByRole('dialog', { name: 'Readings for 行' });
   expect(within(dialog).getByText('haang4')).toBeVisible();
@@ -33,7 +33,7 @@ it('opens alternative readings without changing the selected pronunciation', asy
 
 it('explains a missing character and discards an obsolete selection after an edit', () => {
   render(<Reader />);
-  const input = screen.getByRole('textbox', { name: 'Chinese text' });
+  const input = screen.getByRole('textbox', { name: 'Cantonese text' });
   fireEvent.change(input, { target: { value: '𠀀' } });
   fireEvent.click(screen.getByRole('button', { name: '𠀀. No pronunciation found' }));
   expect(within(screen.getByRole('dialog')).getByText('No pronunciation found.')).toBeVisible();
@@ -44,8 +44,8 @@ it('explains a missing character and discards an obsolete selection after an edi
 
 it('keeps whitespace-only input in the empty reading state', () => {
   render(<Reader />);
-  fireEvent.change(screen.getByRole('textbox', { name: 'Chinese text' }), { target: { value: ' \n\t ' } });
-  expect(screen.getByText('Paste Chinese text to see its Jyutping.')).toBeVisible();
+  fireEvent.change(screen.getByRole('textbox', { name: 'Cantonese text' }), { target: { value: ' \n\t ' } });
+  expect(screen.getByText('Paste Cantonese text to see its Jyutping.')).toBeVisible();
   expect(screen.queryByText('?')).not.toBeInTheDocument();
 });
 

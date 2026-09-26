@@ -50,8 +50,9 @@ export function PhotoTools({ brushSize, onBrushSizeChange, canUndo, onUndo, disa
       }
     }
     function escape(event: KeyboardEvent) {
-      if (event.key !== 'Escape') return;
+      if (event.key !== 'Escape' || event.defaultPrevented) return;
       event.preventDefault();
+      event.stopPropagation();
       setOpen(false);
       trigger.current?.focus({ preventScroll: true });
     }
@@ -68,7 +69,8 @@ export function PhotoTools({ brushSize, onBrushSizeChange, canUndo, onUndo, disa
   return <div className={styles.photoTools}>
     <button ref={trigger} type="button" className={styles.toolButton} aria-label="Brush size"
       title="Brush size" aria-expanded={visible} aria-controls={panelId} disabled={disabled}
-      onClick={() => setOpen(value => !value)}>
+      onPointerDown={event => event.preventDefault()}
+      onClick={() => { setOpen(value => !value); if (visible) trigger.current?.focus({ preventScroll: true }); }}>
       <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"
         strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
         <path d="m14 6 4 4M9 15l-1-3L18 2l4 4-10 10-3-1Z" />
