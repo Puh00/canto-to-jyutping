@@ -15,7 +15,9 @@ test('wheel and keyboard zoom keep brushed text aligned for OCR', async ({ page,
   await page.mouse.wheel(0, -450);
   await expect(page.getByLabel('Photo zoom', { exact: true })).not.toHaveText('100%');
   expect(await page.evaluate(() => scrollY)).toBe(pageScroll);
-  await page.getByLabel('Brush size', { exact: true }).press('End');
+  await page.getByRole('button', { name: 'Brush size', exact: true }).click();
+  await page.getByRole('slider', { name: 'Brush size', exact: true }).press('End');
+  await page.getByRole('slider', { name: 'Brush size', exact: true }).press('Escape');
   await stage.scrollIntoViewIfNeeded();
   const image = page.getByRole('img', { name: 'Selected photo prepared for reading' });
   const zoomed = (await image.boundingBox())!;
@@ -49,7 +51,9 @@ test('pinch zoom and two-finger pan add no marks before a fresh brush stroke', a
   await page.goto('/');
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
   await page.getByLabel('Choose an image', { exact: true }).setInputFiles(path.resolve('tests/fixtures/menu-clean.png'));
-  await page.getByLabel('Brush size', { exact: true }).press('End');
+  await page.getByRole('button', { name: 'Brush size', exact: true }).click();
+  await page.getByRole('slider', { name: 'Brush size', exact: true }).press('End');
+  await page.getByRole('slider', { name: 'Brush size', exact: true }).press('Escape');
   const stage = page.getByRole('group', { name: 'Highlight text in photo' });
   await stage.scrollIntoViewIfNeeded();
   const bounds = (await stage.boundingBox())!;
@@ -107,7 +111,9 @@ test('keyboard zoom, panning and resizing preserve the selected image pixels', a
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
   const picker = page.getByLabel('Choose an image', { exact: true });
   await picker.setInputFiles(path.resolve('tests/fixtures/menu-clean.png'));
-  await page.getByLabel('Brush size', { exact: true }).press('End');
+  await page.getByRole('button', { name: 'Brush size', exact: true }).click();
+  await page.getByRole('slider', { name: 'Brush size', exact: true }).press('End');
+  await page.getByRole('slider', { name: 'Brush size', exact: true }).press('Escape');
   await expect(page.getByRole('button', { name: 'Zoom in', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Zoom out', exact: true })).toHaveCount(0);
   const stage = page.getByRole('group', { name: 'Highlight text in photo' });
@@ -191,7 +197,9 @@ test('keyboard brushing returns to the visible photo after zooming and panning',
   await page.goto('/');
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
   await page.getByLabel('Choose an image', { exact: true }).setInputFiles(path.resolve('tests/fixtures/menu-clean.png'));
-  await page.getByLabel('Brush size', { exact: true }).press('End');
+  await page.getByRole('button', { name: 'Brush size', exact: true }).click();
+  await page.getByRole('slider', { name: 'Brush size', exact: true }).press('End');
+  await page.getByRole('slider', { name: 'Brush size', exact: true }).press('Escape');
   const stage = page.getByRole('group', { name: 'Highlight text in photo' });
   await stage.focus();
   for (let i = 0; i < 20; i++) { await stage.press('ArrowRight'); await stage.press('ArrowDown'); }

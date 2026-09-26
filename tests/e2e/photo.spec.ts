@@ -66,8 +66,14 @@ test(`${action} during model initialization stops the worker and permits another
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
   const picker = page.getByLabel('Choose an image', { exact: true });
   await picker.setInputFiles(menu);
+  const brush = page.getByRole('button', { name: 'Brush size', exact: true });
+  await brush.click();
+  await expect(page.getByRole('slider', { name: 'Brush size', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
   await expect.poll(() => started).toBe(true);
+  await expect(brush).toBeDisabled();
+  await expect(brush).toHaveAttribute('aria-expanded', 'false');
+  await expect(page.getByRole('slider', { name: 'Brush size', exact: true })).toBeHidden();
   await page.getByRole('button', { name: action, exact: true }).click();
   if (action === 'Cancel reading') {
     await expect(page.getByText('Reading canceled. You can adjust the area or choose another photo.')).toBeVisible();

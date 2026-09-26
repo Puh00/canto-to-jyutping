@@ -4,6 +4,7 @@ import type { HighlightStroke, ImagePoint, OpenedImage } from '../../ocr/prepare
 import { clampPhotoZoom, MIN_PHOTO_ZOOM, usePhotoViewport } from './usePhotoViewport';
 import type { ClientPoint, PhotoView, ViewportPoint } from './usePhotoViewport';
 import styles from './highlighter.module.css';
+import { PhotoTools } from './PhotoTools';
 
 type Props = { image: OpenedImage; strokes: HighlightStroke[]; disabled: boolean; onChange: (strokes: HighlightStroke[]) => void };
 type BrushGesture = { id: number | 'keyboard'; previous: HighlightStroke[]; stroke: HighlightStroke };
@@ -153,42 +154,33 @@ export function PhotoHighlighter({ image, strokes, disabled, onChange }: Props) 
       <span>Highlight the text</span>
       <output aria-label="Photo zoom">{Math.round(view.scale * 100)}%</output>
     </figcaption>
-    <div ref={stage} className={styles.stage} style={{ maxWidth: 520 * image.originalWidth / image.originalHeight,
-      cursor: isPanning ? 'grabbing' : 'crosshair' }}
-      role="group" aria-label="Highlight text in photo" aria-describedby="highlight-keyboard-help" aria-disabled={disabled}
-      tabIndex={disabled ? -1 : 0} onKeyDown={keyDown}
-      onFocus={() => setCursor(cursorInView())}
-      onBlur={() => { if (drag.current?.id === 'keyboard') finishBrush(); setShowCursor(false); }}
-      onPointerDown={start} onPointerMove={move} onPointerUp={finish}
-      onPointerCancel={event => finish(event, true)} onLostPointerCapture={event => finish(event, true)}
-      onAuxClick={event => { if (event.button === 1) event.preventDefault(); }}>
-      <div className={styles.imageLayer} style={{ transform: `translate(${view.x * 100}%, ${view.y * 100}%) scale(${view.scale})` }}>
-        <img src={image.previewUrl} alt="Selected photo prepared for reading" draggable={false} />
-        <svg className={styles.overlay} viewBox={'0 0 ' + image.originalWidth + ' ' + image.originalHeight} aria-hidden="true">
-          <g opacity=".38" fill="#e7aa18" stroke="#e7aa18" strokeLinecap="round" strokeLinejoin="round">
-            {visibleStrokes.map((stroke, index) => <g key={index}>
-              <path fill="none" strokeWidth={stroke.width * image.originalWidth}
-                d={stroke.points.map((point, i) => (i ? 'L' : 'M') + point.x * image.originalWidth + ' ' + point.y * image.originalHeight).join(' ')} />
-              {stroke.points[0] && <circle stroke="none" cx={stroke.points[0].x * image.originalWidth}
-                cy={stroke.points[0].y * image.originalHeight} r={stroke.width * image.originalWidth / 2} />}
-            </g>)}
-          </g>
-          {showCursor && <circle cx={cursor.x * image.originalWidth} cy={cursor.y * image.originalHeight}
-            r={brushSize / 200 / view.scale * image.originalWidth} fill="none" stroke="#172921" strokeWidth="2" vectorEffect="non-scaling-stroke" />}
-        </svg>
+    <div className={styles.photoFrame} style={{ maxWidth: 520 * image.originalWidth / image.originalHeight }}>
+      <div ref={stage} className={styles.stage} style={{ cursor: isPanning ? 'grabbing' : 'crosshair' }}
+        role="group" aria-label="Highlight text in photo" aria-describedby="highlight-keyboard-help" aria-disabled={disabled}
+        tabIndex={disabled ? -1 : 0} onKeyDown={keyDown}
+        onFocus={() => setCursor(cursorInView())}
+        onBlur={() => { if (drag.current?.id === 'keyboard') finishBrush(); setShowCursor(false); }}
+        onPointerDown={start} onPointerMove={move} onPointerUp={finish}
+        onPointerCancel={event => finish(event, true)} onLostPointerCapture={event => finish(event, true)}
+        onAuxClick={event => { if (event.button === 1) event.preventDefault(); }}>
+        <div className={styles.imageLayer} style={{ transform: `translate(${view.x * 100}%, ${view.y * 100}%) scale(${view.scale})` }}>
+          <img src={image.previewUrl} alt="Selected photo prepared for reading" draggable={false} />
+          <svg className={styles.overlay} viewBox={'0 0 ' + image.originalWidth + ' ' + image.originalHeight} aria-hidden="true">
+            <g opacity=".38" fill="#e7aa18" stroke="#e7aa18" strokeLinecap="round" strokeLinejoin="round">
+              {visibleStrokes.map((stroke, index) => <g key={index}>
+                <path fill="none" strokeWidth={stroke.width * image.originalWidth}
+                  d={stroke.points.map((point, i) => (i ? 'L' : 'M') + point.x * image.originalWidth + ' ' + point.y * image.originalHeight).join(' ')} />
+                {stroke.points[0] && <circle stroke="none" cx={stroke.points[0].x * image.originalWidth}
+                  cy={stroke.points[0].y * image.originalHeight} r={stroke.width * image.originalWidth / 2} />}
+              </g>)}
+            </g>
+            {showCursor && <circle cx={cursor.x * image.originalWidth} cy={cursor.y * image.originalHeight}
+              r={brushSize / 200 / view.scale * image.originalWidth} fill="none" stroke="#172921" strokeWidth="2" vectorEffect="non-scaling-stroke" />}
+          </svg>
+        </div>
       </div>
-      {strokes.length > 0 && <button type="button" className={styles.undo} aria-label="Undo highlight" disabled={disabled}
-        onPointerDown={event => event.stopPropagation()} onKeyDown={event => event.stopPropagation()}
-        onClick={() => onChange(strokes.slice(0, -1))}>
-        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-          <path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
-        </svg>
-      </button>}
-    </div>
-    <div className={styles.brushTools}>
-      <label>Brush size <input type="range" min="4" max="30" value={brushSize} disabled={disabled}
-        onChange={event => setBrushSize(Number(event.target.value))} /></label>
+      <PhotoTools brushSize={brushSize} onBrushSizeChange={setBrushSize} canUndo={strokes.length > 0}
+        onUndo={() => onChange(strokes.slice(0, -1))} disabled={disabled} />
     </div>
     <details className={styles.help}>
       <summary>Photo tips</summary>
