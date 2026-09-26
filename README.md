@@ -2,6 +2,8 @@
 
 Read Cantonese written in traditional characters. Paste text to see Jyutping beneath each character, or choose a photo and highlight the words you want to read. Tap a character to see other pronunciations. Suggested readings may be wrong.
 
+Use the app at [puh00.github.io/canto-to-jyutping](https://puh00.github.io/canto-to-jyutping/).
+
 Photo recognition runs in your browser. The first scan downloads the OCR models.
 
 ## Run locally
