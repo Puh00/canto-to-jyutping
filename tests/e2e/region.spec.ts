@@ -20,6 +20,12 @@ test('reads highlighted lines and excludes text between them', async ({ page }) 
     await page.mouse.move(bounds.x + bounds.width * .285, bounds.y + bounds.height * line, { steps: 8 });
     await page.mouse.up();
   }
+  const undo = page.getByRole('button', { name: 'Undo highlight', exact: true });
+  await expect(undo).toBeVisible();
+  const stageBounds = (await page.getByRole('group', { name: 'Highlight text in photo' }).boundingBox())!;
+  const undoBounds = (await undo.boundingBox())!;
+  expect(undoBounds.x).toBeGreaterThan(stageBounds.x + stageBounds.width - 60);
+  expect(undoBounds.y).toBeLessThan(stageBounds.y + 20);
   await read.click();
   const reading = page.getByRole('region', { name: 'Photo reading' });
   await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 90_000 });
@@ -29,17 +35,19 @@ test('reads highlighted lines and excludes text between them', async ({ page }) 
   await expect(reading.getByText('啡', { exact: true })).toHaveCount(0);
   await page.screenshot({ path: test.info().outputPath('highlighted-lines.png'), fullPage: true });
   await page.getByRole('button', { name: 'This reading is usable' }).click();
-  await page.getByRole('button', { name: 'Undo highlight', exact: true }).click();
+  await undo.click();
   await expect(reading).toHaveCount(0);
+  await expect(undo).toBeVisible();
   await read.click();
   await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect(reading.getByText('旺', { exact: true })).toHaveCount(0);
   await page.getByText('Scan details', { exact: true }).click();
   await expect(page.getByText(/already loaded/)).toBeVisible();
   await expect(page.getByText(/Photo selection is excluded/)).toBeVisible();
-  await page.getByRole('button', { name: 'Clear highlights', exact: true }).click();
+  await undo.click();
   await expect(reading).toHaveCount(0);
   await expect(read).toBeDisabled();
+  await expect(undo).toHaveCount(0);
   await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
   await expect(reading.getByText('咖', { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect(reading.getByText('旺', { exact: true })).toBeVisible();
@@ -47,7 +55,7 @@ test('reads highlighted lines and excludes text between them', async ({ page }) 
 
 });
 
-test('can highlight with a keyboard and undo or clear the selection', async ({ page }) => {
+test('can highlight with a keyboard and undo each selection', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
   await page.getByLabel('Choose an image', { exact: true }).setInputFiles(path.resolve('tests/fixtures/menu-clean.png'));
@@ -59,11 +67,13 @@ test('can highlight with a keyboard and undo or clear the selection', async ({ p
   await expect(page.getByRole('button', { name: 'Read highlighted text', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Undo highlight', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Read highlighted text', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Undo highlight', exact: true })).toHaveCount(0);
   await canvas.focus();
   await canvas.press('Space');
   await canvas.press('Space');
-  await page.getByRole('button', { name: 'Clear highlights', exact: true }).click();
+  await page.getByRole('button', { name: 'Undo highlight', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Read highlighted text', exact: true })).toBeDisabled();
+  await expect(page.getByRole('button', { name: 'Undo highlight', exact: true })).toHaveCount(0);
   expect(page.workers()).toHaveLength(0);
 });
 
@@ -77,6 +87,9 @@ test('a touch can highlight a character before scanning', async ({ page, isMobil
   const bounds = (await image.boundingBox())!;
   await page.touchscreen.tap(bounds.x + bounds.width * .1, bounds.y + bounds.height * .2);
   await expect(page.getByRole('button', { name: 'Read highlighted text', exact: true })).toBeEnabled();
-  await page.getByRole('button', { name: 'Undo highlight', exact: true }).click();
+  const undo = page.getByRole('button', { name: 'Undo highlight', exact: true });
+  const undoBounds = (await undo.boundingBox())!;
+  await page.touchscreen.tap(undoBounds.x + undoBounds.width / 2, undoBounds.y + undoBounds.height / 2);
   await expect(page.getByRole('button', { name: 'Read highlighted text', exact: true })).toBeDisabled();
+  await expect(undo).toHaveCount(0);
 });
