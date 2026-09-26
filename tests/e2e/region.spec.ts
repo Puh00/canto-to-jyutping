@@ -34,16 +34,12 @@ test('reads highlighted lines and excludes text between them', async ({ page }) 
   await expect(reading.getByText('咖', { exact: true })).toHaveCount(0);
   await expect(reading.getByText('啡', { exact: true })).toHaveCount(0);
   await page.screenshot({ path: test.info().outputPath('highlighted-lines.png'), fullPage: true });
-  await page.getByRole('button', { name: 'This reading is usable' }).click();
   await undo.click();
   await expect(reading).toHaveCount(0);
   await expect(undo).toBeVisible();
   await read.click();
   await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 30_000 });
   await expect(reading.getByText('旺', { exact: true })).toHaveCount(0);
-  await page.getByText('Scan details', { exact: true }).click();
-  await expect(page.getByText(/already loaded/)).toBeVisible();
-  await expect(page.getByText(/Photo selection is excluded/)).toBeVisible();
   await undo.click();
   await expect(reading).toHaveCount(0);
   await expect(read).toBeDisabled();

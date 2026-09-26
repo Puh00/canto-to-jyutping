@@ -1,32 +1,25 @@
 .photo { display: grid; gap: 20px; }
-.controls, .reading, .trial { border: 1px solid var(--line); border-radius: 14px; background: var(--surface); padding: 25px; min-width: 0; }
-.heading h2 { font: 28px var(--serif); margin: 12px 0; }
-.badge { font-size: 10px; letter-spacing: 1.6px; color: var(--green); }
+.controls, .reading { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 25px; min-width: 0; }
 .controls > p { color: var(--muted); font-size: 14px; line-height: 1.65; }
-.pickers { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0; }
+.pickers { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 0; }
 .picker { position: relative; display: inline-flex; align-items: center; min-height: 46px; padding: 10px 20px; background: var(--green); border-radius: 8px; color: var(--on-green); font-size: 14px; cursor: pointer; overflow: hidden; }
 .picker input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
 .picker:focus-within { outline: 3px solid var(--accent); outline-offset: 3px; }
 .picker:has(input:disabled) { opacity: .55; }
 .hint, .status, .error { font-size: 12px; line-height: 1.65; }
 .status:empty { display: none; }
-.error { color: var(--error); }
+.error, .controls > .error { color: var(--error); }
 .controls progress { width: 100%; accent-color: var(--green); }
 .reading h2 { margin: 0 0 20px; font-size: 16px; }
 .hint { color: var(--muted); }
-.trial { font-size: 13px; line-height: 1.7; }
-.trial > p:first-child { margin-top: 0; }
-.trial details { margin: 18px 0; color: var(--muted); }
-.trial summary { cursor: pointer; min-height: 36px; color: var(--green); }
-.trial dl { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(0, 2fr); gap: 8px 16px; }
-.trial dd { margin: 0; overflow-wrap: anywhere; }
 .secondary, .accept { border: 1px solid var(--line); border-radius: 7px; padding: 10px 15px; min-height: 42px; font: inherit; color: var(--green); background: transparent; }
 .accept { color: var(--on-green); background: var(--green); }
 @media (max-width: 680px) {
-  .controls, .reading, .trial { padding: 19px 16px; }
-  .heading h2 { font-size: 24px; }
+  .controls, .reading { padding: 19px 16px; }
   .picker { padding: 10px 14px; }
 }
 
 .areaActions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 20px; }
 .photo button:disabled { opacity: .55; cursor: default; }
+
+.controls h2 { font: 600 16px/1.5 var(--sans); margin: 0; }

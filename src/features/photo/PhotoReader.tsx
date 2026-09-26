@@ -11,7 +11,6 @@ import { PhotoHighlighter } from './PhotoHighlighter';
 import styles from './photo.module.css';
 
 type Status = 'idle' | 'preparing' | 'selecting' | 'reading' | 'done' | 'error' | 'canceled';
-const seconds = (milliseconds: number) => (milliseconds / 1000).toFixed(1);
 
 function PhotoReading({ text }: { text: string }) {
   const tokens = useMemo(() => annotate(text), [text]);
@@ -19,9 +18,10 @@ function PhotoReading({ text }: { text: string }) {
   return <section className={styles.reading} aria-labelledby="photo-reading-title">
     <h2 id="photo-reading-title">Photo reading</h2>
     <AnnotatedText tokens={tokens} onInspect={setSelected} />
-    <p className={styles.hint}>Tap an underlined reading to see alternatives. If the characters look wrong, adjust the area or choose another photo.</p>
+    {tokens.some(token => token.kind === 'han' && token.alternatives.length > 0) && <p className={styles.hint}>Tap an underlined reading to see alternatives.</p>}
+    <p className={styles.hint}>If the characters look wrong, adjust the area or choose another photo.</p>
     {selected && <PronunciationDetails token={selected} onClose={() => setSelected(null)} />}
-    <p className={styles.hint}>Some characters have multiple readings. Suggested pronunciations may be incorrect.</p>
+    <p className={styles.hint}>Suggested readings may be incorrect.</p>
   </section>;
 }
 
@@ -30,17 +30,11 @@ export default function PhotoReader() {
   const [progress, setProgress] = useState<OcrProgress>({ stage: 'loading' });
   const [image, setImage] = useState<OpenedImage | null>(null);
   const [strokes, setStrokes] = useState<HighlightStroke[]>([]);
-  const [result, setResult] = useState<(OcrResult & { readyMs: number; width: number; height: number }) | null>(null);
+  const [result, setResult] = useState<OcrResult | null>(null);
   const [error, setError] = useState('');
-  const [attempts, setAttempts] = useState(0);
-  const [usableMs, setUsableMs] = useState<number | null>(null);
-  const [includesPhotoSelection, setIncludesPhotoSelection] = useState(true);
   const session = useRef<ReturnType<typeof createOcrSession> | null>(null);
   const generation = useRef(0);
   const source = useRef<OpenedImage | null>(null);
-  const startedAt = useRef<number | null>(null);
-  const pickerOpenedAt = useRef<number | null>(null);
-  const scanned = useRef(false);
   const busy = status === 'preparing' || status === 'reading';
 
   useEffect(() => () => {
@@ -49,28 +43,20 @@ export default function PhotoReader() {
     source.current?.dispose();
   }, []);
 
-  function clearResult() { setResult(null); setUsableMs(null); setError(''); }
+  function clearResult() { setResult(null); setError(''); }
   function clearPhoto() {
     source.current?.dispose(); source.current = null;
-    setImage(null); setStrokes([]); scanned.current = false; clearResult();
+    setImage(null); setStrokes([]); clearResult();
   }
-  function startNewTrial() {
+  function resetPhoto() {
     generation.current++;
     if (busy) { session.current?.dispose(); session.current = null; }
-    clearPhoto(); startedAt.current = null; pickerOpenedAt.current = null; setAttempts(0); setIncludesPhotoSelection(true); setStatus('idle');
-  }
-  function openPicker(event: React.MouseEvent<HTMLInputElement>) {
-    event.currentTarget.value = '';
-    pickerOpenedAt.current = performance.now();
+    clearPhoto(); setStatus('idle');
   }
   async function selectPhoto(file?: File) {
     if (!file) return;
     const id = ++generation.current;
-    const newTrial = usableMs !== null || startedAt.current === null;
-    if (newTrial) startedAt.current = pickerOpenedAt.current ?? performance.now();
-    pickerOpenedAt.current = null;
-    setIncludesPhotoSelection(true);
-    clearPhoto(); setAttempts(value => newTrial ? 1 : value + 1); setStatus('preparing');
+    clearPhoto(); setStatus('preparing');
     try {
       const opened = await openImage(file);
       if (id !== generation.current) { opened.dispose(); return; }
@@ -81,21 +67,13 @@ export default function PhotoReader() {
       setStatus('error');
     }
   }
-  function beginAfterAcceptedReading() {
-    if (usableMs === null) return;
-    startedAt.current = performance.now(); setAttempts(1); scanned.current = false; setIncludesPhotoSelection(false);
-  }
   function changeHighlights(value: HighlightStroke[]) {
     if (busy) return;
-    beginAfterAcceptedReading();
     setStrokes(value); clearResult(); setStatus('selecting');
   }
   async function readRegion(whole = false) {
     if (!image || busy) return;
     const id = ++generation.current;
-    beginAfterAcceptedReading();
-    if (scanned.current) setAttempts(value => value + 1);
-    scanned.current = true;
     clearResult(); setStatus('reading'); setProgress({ stage: 'loading' });
     try {
       const prepared = await image.prepare(whole ? undefined : strokes);
@@ -106,8 +84,7 @@ export default function PhotoReader() {
       });
       if (id !== generation.current) return;
       if (!recognized.text) throw new Error('No text was found. Adjust the area or try a clearer photo.');
-      setResult({ ...recognized, readyMs: performance.now() - startedAt.current!,
-        width: prepared.pixels.width, height: prepared.pixels.height });
+      setResult(recognized);
       setStatus('done');
     } catch (failure) {
       if (id !== generation.current) return;
@@ -129,20 +106,18 @@ export default function PhotoReader() {
 
   return <div className={styles.photo}>
     <section className={styles.controls} aria-labelledby="photo-title">
-      <div className={styles.heading}><span className={styles.badge}>PHOTO READER</span><h2 id="photo-title">Read the Cantonese around you.</h2></div>
-      <p>Take a photo, then brush over the text you want to read.</p>
+      <h2 id="photo-title">Choose a photo, then highlight the text.</h2>
       <div className={styles.pickers}>
         {[{ label: 'Take a photo', capture: true }, { label: 'Choose an image', capture: false }].map(choice =>
           <label className={styles.picker} key={choice.label}>
             <span>{choice.label}</span>
             <input type="file" accept="image/*" capture={choice.capture ? 'environment' : undefined}
-              aria-label={choice.label} disabled={busy} onClick={openPicker}
-              ref={node => { if (node) node.oncancel = () => { pickerOpenedAt.current = null; }; }}
+              aria-label={choice.label} disabled={busy} onClick={event => { event.currentTarget.value = ''; }}
               onChange={event => { const file = event.currentTarget.files?.[0]; event.currentTarget.value = ''; void selectPhoto(file); }} />
           </label>)}
+        {image && <button className={styles.secondary} type="button" onClick={resetPhoto}>Clear photo</button>}
         {busy && <button className={styles.secondary} type="button" onClick={cancel}>Cancel reading</button>}
       </div>
-      <p className={styles.hint}>Photos are processed on your device. Initial downloads can take a while; later scans reuse the loaded reader.</p>
       <p role="status" className={styles.status}>{statusText}</p>
       {status === 'reading' && <progress aria-label="Photo recognition progress" />}
       {!image && error && <p role="alert" className={styles.error}>{error}</p>}
@@ -158,20 +133,6 @@ export default function PhotoReader() {
     {image && error && <section className={styles.reading} aria-labelledby="photo-error-title">
       <h2 id="photo-error-title">Photo reading</h2>
       <p role="alert" className={styles.error}>{error}</p>
-    </section>}
-    {(result || attempts > 0) && <section className={styles.trial} aria-label="Photo trial timing">
-      {result && <><p>Reading ready after <strong>{seconds(result.readyMs)} seconds</strong>{includesPhotoSelection
-        ? ', including photo selection and highlighting.' : ', using the photo already open. Photo selection is excluded.'} {Math.max(0, attempts - 1)} retries.</p>
-        {usableMs === null ? <button className={styles.accept} type="button" onClick={() => setUsableMs(performance.now() - startedAt.current!)}>This reading is usable</button>
-          : <p role="status">Usable after <strong>{seconds(usableMs)} seconds</strong>. Compare this with your usual workflow.</p>}
-        <details><summary>Scan details</summary><dl>
-          <dt>Reader</dt><dd>PaddleOCR 0.4.2, PP-OCRv5 mobile, WASM</dd>
-          <dt>Preparation of reader</dt><dd>{seconds(result.initializationMs)} seconds{result.reused ? ', already loaded' : ', newly initialized'}</dd>
-          <dt>Recognition</dt><dd>{seconds(result.recognitionMs)} seconds</dd>
-          <dt>Selected image</dt><dd>{image?.format}, {image?.originalWidth} × {image?.originalHeight}</dd>
-          <dt>Pixels read from selected area</dt><dd>{result.width} × {result.height}</dd>
-        </dl><p>Times stay in this page only. A fresh page may still use cached model files. A wrong or unreadable result is a failed trial.</p></details></>}
-      <button className={styles.secondary} type="button" onClick={startNewTrial}>Start a new trial</button>
     </section>}
   </div>;
 }

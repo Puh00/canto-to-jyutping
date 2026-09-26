@@ -7,7 +7,7 @@ test('reads text, inspects alternatives with keyboard, and resets without persis
   const input = page.getByRole('textbox', { name: 'Chinese text' });
   await expect(input).toBeEmpty();
   await input.fill('銀行 行路\nCoffee $28');
-  const output = page.getByRole('region', { name: 'Your Cantonese reading' });
+  const output = page.getByRole('region', { name: 'Jyutping' });
   await expect(output.getByText('hong4', { exact: true })).toBeVisible();
   await expect(output.getByText('haang4', { exact: true })).toBeVisible();
   const trigger = page.getByRole('button', { name: '行, hong4. View other readings' });
@@ -62,7 +62,7 @@ test('converts after initial load without making network requests or using app s
   await page.context().setOffline(true);
   page.on('request', request => requests.push(request.url()));
   await page.getByRole('textbox', { name: 'Chinese text' }).fill('咖啡 Coffee $28');
-  await expect(page.getByRole('region', { name: 'Your Cantonese reading' }).getByText('gaa3', { exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Jyutping' }).getByText('gaa3', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: '咖, gaa3. View other readings' }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
   expect(requests).toEqual([]);
@@ -73,7 +73,7 @@ test('preserves variation selectors and combining marks inside the displayed cha
   await page.goto('/');
   const characters = ['神\uFE00', '神\u{E0100}', '神\u0301'];
   await page.getByRole('textbox', { name: 'Chinese text' }).fill(characters.join(' '));
-  const output = page.getByRole('region', { name: 'Your Cantonese reading' });
+  const output = page.getByRole('region', { name: 'Jyutping' });
   for (const character of characters) {
     await expect(output.getByText(character, { exact: true })).toBeVisible();
   }

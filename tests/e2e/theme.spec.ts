@@ -16,21 +16,21 @@ test('follows the system and remembers only explicit appearance overrides', asyn
   await expect(appearance.locator('circle')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Use system' })).toHaveCount(0);
   const body = page.locator('body');
-  await expect(body).toHaveCSS('background-color', 'rgb(21, 31, 26)');
+  await expect(body).toHaveCSS('background-color', 'rgb(20, 37, 29)');
   expect(await page.evaluate(() => localStorage.length)).toBe(0);
   await page.getByRole('textbox', { name: 'Chinese text' }).fill('銀行');
   await expect(page.getByText('hong4', { exact: true })).toBeVisible();
 
   await page.emulateMedia({ colorScheme: 'light' });
-  await expect(body).toHaveCSS('background-color', 'rgb(246, 245, 239)');
+  await expect(body).toHaveCSS('background-color', 'rgb(245, 241, 231)');
   await expect(appearance).toHaveAttribute('aria-checked', 'false');
   await expect(appearance.locator('circle')).toHaveCount(1);
   await appearance.focus();
   await page.keyboard.press('Space');
-  await expect(body).toHaveCSS('background-color', 'rgb(21, 31, 26)');
+  await expect(body).toHaveCSS('background-color', 'rgb(20, 37, 29)');
   await page.reload();
   await expect(appearance).toHaveAttribute('aria-checked', 'true');
-  await expect(body).toHaveCSS('background-color', 'rgb(21, 31, 26)');
+  await expect(body).toHaveCSS('background-color', 'rgb(20, 37, 29)');
   await expect(page.getByRole('textbox', { name: 'Chinese text' })).toBeEmpty();
   expect(await page.evaluate(() => ({ local: { ...localStorage }, session: sessionStorage.length })))
     .toEqual({ local: { 'canto-theme': 'dark' }, session: 0 });
@@ -38,10 +38,10 @@ test('follows the system and remembers only explicit appearance overrides', asyn
   await appearance.focus();
   await page.keyboard.press('Enter');
   await page.emulateMedia({ colorScheme: 'dark' });
-  await expect(body).toHaveCSS('background-color', 'rgb(246, 245, 239)');
+  await expect(body).toHaveCSS('background-color', 'rgb(245, 241, 231)');
   await page.reload();
   await expect(appearance).toHaveAttribute('aria-checked', 'false');
-  await expect(body).toHaveCSS('background-color', 'rgb(246, 245, 239)');
+  await expect(body).toHaveCSS('background-color', 'rgb(245, 241, 231)');
   await expect(page.getByRole('button', { name: 'Use system' })).toHaveCount(0);
   expect(await page.evaluate(() => localStorage.getItem('canto-theme'))).toBe('light');
   await expect(appearance).toHaveAttribute('title', 'Light appearance. Switch to dark');
@@ -97,6 +97,29 @@ async function expectReadable(locator: Locator) {
   expect(contrast(colors.foreground, colors.background)).toBeGreaterThanOrEqual(4.5);
 }
 
+test('compact reader keeps examples useful and guidance contextual in both themes', async ({ page }) => {
+  await page.goto('/');
+  const input = page.getByRole('textbox', { name: 'Chinese text' });
+  for (const theme of ['light', 'dark']) {
+    await setAppearance(page, theme);
+    await expect(page.getByRole('heading', { name: 'Chinese to Jyutping' })).toBeVisible();
+    await expect(page.getByText('Paste Chinese text to see its Jyutping.')).toBeVisible();
+    await expect(page.getByText('Suggested readings may be incorrect.')).toHaveCount(0);
+    await expectReadable(page.getByText('Paste Chinese text to see its Jyutping.'));
+    await expectReadable(page.getByText('Text and photos are processed on your device.'));
+    await page.screenshot({ path: test.info().outputPath('empty-' + theme + '.png'), fullPage: true });
+    await input.fill('Coffee $28');
+    await expect(page.getByText('Tap an underlined reading to see alternatives.')).toHaveCount(0);
+    await expect(page.getByText('Suggested readings may be incorrect.')).toHaveCount(0);
+    await page.getByRole('button', { name: 'A café order' }).click();
+    await expect(input).toHaveValue('咖啡 Coffee $28\n牛肉麵 $58');
+    await expect(page.getByRole('region', { name: 'Jyutping' }).getByText('gaa3', { exact: true })).toBeVisible();
+    await page.getByRole('button', { name: 'Clear text' }).click();
+    await expect(input).toBeFocused();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  }
+});
+
 test('appearance still changes when browser storage is unavailable', async ({ page }) => {
   await page.addInitScript(() => {
     for (const method of ['getItem', 'setItem', 'removeItem']) {
@@ -108,9 +131,9 @@ test('appearance still changes when browser storage is unavailable', async ({ pa
   await page.emulateMedia({ colorScheme: 'light' });
   await page.goto('/');
   await setAppearance(page, 'dark');
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(21, 31, 26)');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(20, 37, 29)');
   await setAppearance(page, 'light');
-  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(246, 245, 239)');
+  await expect(page.locator('body')).toHaveCSS('background-color', 'rgb(245, 241, 231)');
   await page.getByRole('textbox', { name: 'Chinese text' }).fill('銀行');
   await expect(page.getByText('hong4', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
@@ -147,7 +170,7 @@ test('both themes keep readings legible and photo colors and highlights intact',
     expect(contrast(focusColors.outline, focusColors.background)).toBeGreaterThanOrEqual(3);
     await expectReadable(appearance);
     await expectReadable(page.getByText('hong4', { exact: true }));
-    await expectReadable(page.getByText('Some characters have multiple readings. Suggested pronunciations may be incorrect.'));
+    await expectReadable(page.getByText('Suggested readings may be incorrect.'));
     await page.getByRole('button', { name: '行, hong4. View other readings' }).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
@@ -167,6 +190,7 @@ test('both themes keep readings legible and photo colors and highlights intact',
     await setAppearance(page, theme);
     await expectReadable(page.getByRole('alert'));
     await expectReadable(page.getByText('Choose an image', { exact: true }));
+    await page.screenshot({ path: test.info().outputPath('error-' + theme + '.png'), fullPage: true });
   }
 
   await picker.setInputFiles('tests/fixtures/menu-clean.png');

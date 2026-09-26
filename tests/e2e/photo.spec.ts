@@ -3,7 +3,7 @@ import path from 'node:path';
 import { writeFile } from 'node:fs/promises';
 
 const menu = path.resolve('tests/fixtures/menu-clean.png');
-test('PaddleOCR reads a photo locally, reuses its worker without network, and records usability', async ({ page, context }) => {
+test('PaddleOCR reads a photo locally, reuses its worker without network, and clears the photo', async ({ page, context }) => {
   test.setTimeout(120_000);
   const requests: { url: string; method: string; hasBody: boolean }[] = [];
   const responses: { url: string; bytes: number; encoding: string | null }[] = [];
@@ -36,26 +36,23 @@ test('PaddleOCR reads a photo locally, reuses its worker without network, and re
   await picker.setInputFiles(menu);
   await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
   await expect(reading.getByText('ngau4', { exact: true })).toBeVisible({ timeout: 30_000 });
-  await page.getByText('Scan details', { exact: true }).click();
-  await expect(page.getByText(/already loaded/)).toBeVisible();
   expect(requests).toHaveLength(requestCount);
-  await page.getByRole('button', { name: 'This reading is usable' }).click();
-  await expect(page.getByText(/Usable after/)).toBeVisible();
-  const accepted = await page.getByText(/Usable after/).textContent();
   await Promise.all([page.waitForEvent('filechooser'), picker.click()]);
   await picker.dispatchEvent('cancel');
-  await expect(page.getByText(/Usable after/)).toHaveText(accepted!);
+  await expect(reading.getByText('ngau4', { exact: true })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Photo trial timing' })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'This reading is usable' })).toHaveCount(0);
 
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   expect(await page.evaluate(() => ({ local: localStorage.length, session: sessionStorage.length }))).toEqual({ local: 0, session: 0 });
-  await page.getByRole('button', { name: 'Start a new trial' }).click();
+  await page.getByRole('button', { name: 'Clear photo' }).click();
   await expect(reading).toHaveCount(0);
   await expect(page.getByRole('img', { name: 'Selected photo prepared for reading' })).toHaveCount(0);
   expect(pageErrors).toEqual([]);
 });
 
-test('cancel during model initialization stops the worker and permits another photo', async ({ page, context }) => {
+for (const action of ['Cancel reading', 'Clear photo']) {
+test(`${action} during model initialization stops the worker and permits another photo`, async ({ page, context }) => {
   test.setTimeout(90_000);
   let started = false;
   let release!: () => void;
@@ -71,8 +68,14 @@ test('cancel during model initialization stops the worker and permits another ph
   await picker.setInputFiles(menu);
   await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
   await expect.poll(() => started).toBe(true);
-  await page.getByRole('button', { name: 'Cancel reading' }).click();
-  await expect(page.getByText('Reading canceled. You can adjust the area or choose another photo.')).toBeVisible();
+  await page.getByRole('button', { name: action, exact: true }).click();
+  if (action === 'Cancel reading') {
+    await expect(page.getByText('Reading canceled. You can adjust the area or choose another photo.')).toBeVisible();
+  } else {
+    await expect(page.getByRole('img', { name: 'Selected photo prepared for reading' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Clear photo', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Photo reading' })).toHaveCount(0);
+  }
   await expect.poll(() => page.workers().length).toBe(0);
   release();
   await context.unroute('**/ocr/paddle/*.tar');
@@ -82,6 +85,7 @@ test('cancel during model initialization stops the worker and permits another ph
   await page.getByRole('button', { name: 'Read text', exact: true }).click();
   await expect.poll(() => page.workers().length).toBe(0);
 });
+}
 
 test('an unreadable image reports a recoverable error without starting OCR', async ({ page }) => {
   await page.goto('/');
@@ -102,7 +106,7 @@ test('honors JPEG orientation when preparing the photo', async ({ page }) => {
   const preview = page.getByRole('img', { name: 'Selected photo prepared for reading' });
   await expect(preview).toBeVisible();
   expect(await preview.evaluate(image => ({ width: (image as HTMLImageElement).naturalWidth, height: (image as HTMLImageElement).naturalHeight }))).toEqual({ width: 300, height: 600 });
-  await page.getByRole('button', { name: 'Start a new trial' }).click();
+  await page.getByRole('button', { name: 'Clear photo' }).click();
   await expect(preview).toHaveCount(0);
 });
 

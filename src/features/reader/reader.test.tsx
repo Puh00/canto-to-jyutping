@@ -7,7 +7,7 @@ it('automatically annotates editable text and removes output when cleared', () =
   const input = screen.getByRole('textbox', { name: 'Chinese text' });
   expect(input).toHaveValue('');
   fireEvent.change(input, { target: { value: '銀行\nCoffee $28' } });
-  const output = screen.getByRole('region', { name: 'Your Cantonese reading' });
+  const output = screen.getByRole('region', { name: 'Jyutping' });
   expect(within(output).getByText('ngan4')).toBeVisible();
   expect(within(output).getByText('hong4')).toBeVisible();
   expect(within(output).getByText('Coffee $28')).toBeVisible();
@@ -45,7 +45,7 @@ it('explains a missing character and discards an obsolete selection after an edi
 it('keeps whitespace-only input in the empty reading state', () => {
   render(<Reader />);
   fireEvent.change(screen.getByRole('textbox', { name: 'Chinese text' }), { target: { value: ' \n\t ' } });
-  expect(screen.getByText('Your reading starts here.')).toBeVisible();
+  expect(screen.getByText('Paste Chinese text to see its Jyutping.')).toBeVisible();
   expect(screen.queryByText('?')).not.toBeInTheDocument();
 });
 
