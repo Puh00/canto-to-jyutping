@@ -141,6 +141,6 @@ export default function PhotoReader() {
       </footer>
     </PhotoEditor>}
     {result && image && <PhotoReading key={result.text} text={result.text} image={image} crop={result.crop}
-      strokes={result.strokes} onEdit={editPhoto} disabled={busy} actions={picker} notice={pickerNotice} />}
+      strokes={result.strokes} onEdit={editPhoto} disabled={busy} audioEnabled={!editorOpen && !busy} actions={picker} notice={pickerNotice} />}
   </div>;
 }

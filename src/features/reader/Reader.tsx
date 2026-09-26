@@ -5,6 +5,8 @@ import { annotate } from '../../pronunciation/annotate';
 import { AnnotatedText } from './AnnotatedText';
 import { TextInput } from './TextInput';
 import styles from './reader.module.css';
+import { usePlayback } from '../../audio/usePlayback';
+import { PlaybackControls } from '../../audio/PlaybackControls';
 
 const examples = [
   { label: 'A café order', text: '咖啡 Coffee $28\n牛肉麵 $58' },
@@ -12,15 +14,16 @@ const examples = [
   { label: 'Everyday Cantonese', text: '佢喺屋企' },
 ];
 
-export function Reader() {
+export function Reader({ active = true }: { active?: boolean }) {
   const [source, setSource] = useState('');
   const [selected, setSelected] = useState<Annotation | null>(null);
-  function changeSource(value: string) { setSelected(null); setSource(value); }
+  function changeSource(value: string) { playback.stop(); setSelected(null); setSource(value); }
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const tokens = useMemo(() => annotate(source), [source]);
+  const playback = usePlayback(tokens, active);
+  function inspect(token: Annotation) { playback.stop(); setSelected(token); }
   const hasText = source.trim().length > 0;
   const hasReadings = tokens.some(token => token.kind === 'han');
-  const hasAlternatives = tokens.some(token => token.kind === 'han' && token.alternatives.length > 0);
 
   return (
     <div className={styles.reader}>
@@ -29,9 +32,10 @@ export function Reader() {
         <section className={styles.outputCard} aria-labelledby="output-title">
           <div className={styles.cardHeading}>
             <h2 id="output-title">Jyutping</h2>
+            {hasText && <PlaybackControls playback={playback} />}
           </div>
           <div className={styles.outputBody}>
-            {hasText ? <><AnnotatedText tokens={tokens} onInspect={setSelected} />{hasAlternatives && <p className={styles.readingHint}>Tap an underlined reading to see alternatives.</p>}</> : (
+            {hasText ? <><AnnotatedText tokens={tokens} onInspect={inspect} activeStart={selected ? null : playback.activeStart} onPlay={playback.playReading} canPlayReading={playback.canPlayReading} />{hasReadings && <p className={styles.readingHint}>Tap a character to hear it. Tap an underlined reading for alternatives.</p>}</> : (
               <div className={styles.empty}>
                 <div className={styles.exampleCharacters} aria-hidden="true">
                   <span>你<small>nei5</small></span><span>好<small>hou2</small></span>
@@ -46,7 +50,7 @@ export function Reader() {
         <span>Try an example</span>
         {examples.map(example => <button key={example.label} type="button" onClick={() => changeSource(example.text)}>{example.label}<span aria-hidden="true">↗</span></button>)}
       </div>
-      {selected && <PronunciationDetails token={selected} onClose={() => setSelected(null)} />}
+      {selected && <PronunciationDetails token={selected} playback={playback} onClose={() => { playback.stop(); setSelected(null); }} />}
       {hasReadings && <p className={styles.accuracy}>Suggested readings may be incorrect.</p>}
     </div>
   );

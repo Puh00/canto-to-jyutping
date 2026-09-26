@@ -17,7 +17,7 @@ test('reads text, inspects alternatives with keyboard, and resets without persis
   await expect(dialog).toBeVisible();
   await expect(dialog.getByText('haang4', { exact: true })).toBeVisible();
   await page.keyboard.press('Tab');
-  await expect(dialog.getByRole('button', { name: 'Close pronunciation details' })).toBeFocused();
+  await expect(dialog.getByRole('button', { name: 'hong4. Play pronunciation', exact: true })).toBeFocused();
   await page.keyboard.press('Escape');
   await expect(dialog).not.toBeVisible();
   await expect(trigger).toBeFocused();
@@ -47,8 +47,8 @@ test('wraps long readings without horizontal overflow and keeps readings beneath
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth > window.innerWidth);
   expect(overflow).toBe(false);
   const character = page.getByRole('button', { name: '咖, gaa3. View other readings' }).first();
-  const base = await character.locator('span').nth(0).boundingBox();
-  const reading = await character.locator('span').nth(1).boundingBox();
+  const base = await character.locator('..').getByRole('button', { name: 'Play pronunciation' }).boundingBox();
+  const reading = await character.boundingBox();
   expect(base).not.toBeNull();
   expect(reading).not.toBeNull();
   expect(reading!.y).toBeGreaterThan(base!.y);
