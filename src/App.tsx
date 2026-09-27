@@ -19,7 +19,8 @@ export function App() {
       </header>
       <main>
         <div className="intro">
-          <h1>Cantonese Reader</h1>
+          <h1>Read Cantonese, one character at a time</h1>
+          <p>Paste text or choose a photo to see Jyutping beneath each character.</p>
         </div>
         <nav className="reader-modes" aria-label="Reading method">
           <button type="button" aria-pressed={mode === 'text'} onClick={() => setMode('text')}>Read text</button>

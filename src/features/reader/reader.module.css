@@ -1,5 +1,6 @@
 .reader { width: 100%; }
-.workspace { display: grid; grid-template-columns: 1fr 1.1fr; gap: 20px; align-items: stretch; }
+.workspace { display: grid; grid-template-columns: 1fr 1.1fr; gap: 20px; align-items: start; }
+.inputColumn { min-width: 0; }
 .inputCard, .outputCard { min-width: 0; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--surface); }
 .cardHeading { min-height: 58px; padding: 0 23px; display: flex; align-items: center; justify-content: space-between; gap: 10px; border-bottom: 1px solid var(--subtle-line); }
 .cardHeading h2, .cardHeading label { font-size: 13px; font-weight: 600; margin: 0; }
@@ -21,7 +22,7 @@
 .character { font-size: 30px; }
 .reading { margin-top: 5px; font: 12px/1.4 var(--sans); color: var(--green); white-space: nowrap; }
 .plain { font-size: 21px; }
-.exampleRow { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; padding: 20px 0 8px; }
+.exampleRow { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; padding: 14px 0 0; }
 .exampleRow > span { font-size: 12px; color: var(--muted); margin-right: 4px; }
 .exampleRow button { border: 1px solid var(--line); border-radius: 30px; background: transparent; padding: 8px 12px; font-size: 12px; color: var(--green); min-height: 44px; }
 .exampleRow button span { margin-left: 12px; }
@@ -37,7 +38,7 @@
   .empty { padding: 2px 0; }
   .exampleCharacters { margin-bottom: 13px; }
   .exampleCharacters > span { height: 69px; width: 53px; font-size: 27px; }
-  .exampleRow { padding-top: 18px; gap: 7px; }
+  .exampleRow { padding-top: 12px; gap: 7px; }
   .exampleRow > span { width: 100%; margin-bottom: 4px; }
   .exampleRow button { min-height: 44px; }
   .clear { min-height: 44px; }

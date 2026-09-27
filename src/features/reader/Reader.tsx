@@ -25,7 +25,13 @@ export function Reader() {
   return (
     <div className={styles.reader}>
       <div className={styles.workspace}>
-        <TextInput value={source} onChange={changeSource} inputRef={inputRef} />
+        <div className={styles.inputColumn}>
+          <TextInput value={source} onChange={changeSource} inputRef={inputRef} />
+          <div className={styles.exampleRow}>
+            <span>Try an example</span>
+            {examples.map(example => <button key={example.label} type="button" onClick={() => changeSource(example.text)}>{example.label}<span aria-hidden="true">↗</span></button>)}
+          </div>
+        </div>
         <section className={styles.outputCard} aria-labelledby="output-title">
           <div className={styles.cardHeading}>
             <h2 id="output-title">Jyutping</h2>
@@ -41,10 +47,6 @@ export function Reader() {
             )}
           </div>
         </section>
-      </div>
-      <div className={styles.exampleRow}>
-        <span>Try an example</span>
-        {examples.map(example => <button key={example.label} type="button" onClick={() => changeSource(example.text)}>{example.label}<span aria-hidden="true">↗</span></button>)}
       </div>
       {selected && <PronunciationDetails token={selected} onClose={() => setSelected(null)} />}
       {hasReadings && <p className={styles.accuracy}>Suggested readings may be incorrect.</p>}
