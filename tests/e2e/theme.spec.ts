@@ -105,7 +105,7 @@ test('compact reader keeps examples useful and guidance contextual in both theme
   const input = page.getByRole('textbox', { name: 'Cantonese text' });
   for (const theme of ['light', 'dark']) {
     await setAppearance(page, theme);
-    await expect(page.getByRole('heading', { name: 'Cantonese to Jyutping' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Cantonese Reader' })).toBeVisible();
     await expect(page.getByText('Paste Cantonese text to see its Jyutping.')).toBeVisible();
     await expect(page.getByText('Suggested readings may be incorrect.')).toHaveCount(0);
     await expectReadable(page.getByText('Paste Cantonese text to see its Jyutping.'));

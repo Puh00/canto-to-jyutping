@@ -1,4 +1,4 @@
-# Canto
+# Cantonese Reader
 
 Read Cantonese written in traditional characters. Paste text to see Jyutping beneath each character, or choose a photo and highlight the words you want to read. Tap a character to see other pronunciations. Suggested readings may be wrong.
 

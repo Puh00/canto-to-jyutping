@@ -9,9 +9,9 @@ export function App() {
   return (
     <div className="site-shell">
       <header className="site-header">
-        <a href="./" className="brand" aria-label="Canto home">
+        <a href="./" className="brand" aria-label="Cantonese Reader home">
           <span className="brand-mark" lang="zh-Hant">粵</span>
-          <span>canto<span className="brand-dot">.</span></span>
+          <span>Cantonese Reader</span>
         </a>
         <div className="header-actions">
           <AppearanceControl />
@@ -19,7 +19,7 @@ export function App() {
       </header>
       <main>
         <div className="intro">
-          <h1>Cantonese to Jyutping</h1>
+          <h1>Cantonese Reader</h1>
         </div>
         <nav className="reader-modes" aria-label="Reading method">
           <button type="button" aria-pressed={mode === 'text'} onClick={() => setMode('text')}>Read text</button>
