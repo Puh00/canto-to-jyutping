@@ -1,0 +1,23 @@
+Cantonese syllable recordings: permission and attribution
+
+Recordings by 林璃蝶 (Indicum Lam), provided by Words.hk.
+
+Words.hk supplied the recordings in wordshk_jyutping_202207.zip and granted
+permission for this project's non-commercial use in correspondence with the
+project maintainer. The permission specifies:
+
+- Non-commercial use only.
+- Credit to 林璃蝶, or Indicum Lam in English.
+- The recordings cannot be sublicensed under an open-source license.
+
+The audio recordings are separate from the application code and are not
+covered by any open-source license applied to that code or its dependencies.
+This notice records the permission received; it does not grant a new license
+or additional rights to others. Contact Words.hk for permission for uses not
+covered by the original grant. Do not assume that public availability, the
+Words.hk text-data terms, or another application's software license grants
+rights to these recordings.
+
+Source: https://words.hk/
+Original archive SHA-256:
+30041d3b5e0352a3de9f32fbe6d78e2d5a319f00b38e3a545e97ef65c073057a

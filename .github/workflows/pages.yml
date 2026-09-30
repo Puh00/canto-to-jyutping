@@ -37,10 +37,10 @@ jobs:
         run: npm run build -- --base "$PAGES_BASE_PATH/"
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
-      - name: Verify publication contents and OCR assets
+      - name: Verify publication contents, audio permissions and original assets
         run: node scripts/verify-pages-build.mjs
       - run: npx playwright install --with-deps chromium
-      - name: Test photo reading at the deployment subpath
+      - name: Test audio playback and photo reading at the deployment subpath
         run: PAGES_URL="http://127.0.0.1:4173${PAGES_BASE_PATH}/" npx playwright test tests/e2e/deployment.spec.ts --project=chromium
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
