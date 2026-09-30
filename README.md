@@ -6,9 +6,9 @@ Use the app at [puh00.github.io/canto-to-jyutping](https://puh00.github.io/canto
 
 Photo recognition runs in your browser. The first scan downloads the OCR models.
 
-Choose **Read aloud** to hear the displayed Jyutping one character at a time, with the current character highlighted. Pause, resume, or stop playback in either reading mode. Characters without a matching recording are skipped; English text and numbers are not spoken.
+Choose **Read aloud** to hear the displayed Jyutping one character at a time, with the current character highlighted. Pause, resume, or stop playback in either reading mode. Characters without available audio are skipped; English text and numbers are not spoken.
 
-Audio is fetched on demand from the [words.hk app's syllable recordings](https://github.com/AlienKevin/wordshk_app/tree/1571375f5daceab45d0393ac5a1a72b6a47067c0/assets/jyutping_female). Playback requires a connection for uncached clips. Text conversion remains on-device; audio requests disclose the requested syllable filenames to the hosting service. Clips are cached in memory for the current reading, not stored persistently by the app.
+Tap a character to hear its suggested pronunciation. Tap an underlined Jyutping reading to open alternatives, then tap a reading to compare its sound without changing the text. A character tap stops any full-text sequence; Read aloud restarts from the beginning.
 
 ## Run locally
 
@@ -32,9 +32,16 @@ npm run build
 
 * [ToJyutping](https://github.com/CanCLID/to-jyutping) adds Cantonese pronunciations.
 * [PaddleOCR](https://github.com/PaddlePaddle/PaddleOCR) reads text in photos.
-* [words.hk app](https://github.com/AlienKevin/wordshk_app) provides the Cantonese syllable recordings used for audio playback.
 * The app also uses React and ONNX Runtime Web.
 
-Third-party license terms are in [notices.txt](public/notices.txt).
+Project code is licensed under [MIT](LICENSE). Third-party license terms are in [notices.txt](public/notices.txt).
 
-Tap a character to hear its suggested pronunciation. Tap an underlined Jyutping reading to open alternatives, then tap a reading to compare its sound without changing the text. A character tap stops any full-text sequence; Read aloud restarts from the beginning.
+### Audio permission and attribution
+
+Audio recordings are by **林璃蝶 / Indicum Lam**, provided by [Words.hk](https://words.hk/) and used with permission for **non-commercial use only**.
+
+The recordings are **excluded from this project's MIT license** and cannot be
+licensed or sublicensed under an open-source license. See the
+[audio permission notice](public/audio-permission.txt) for the terms received.
+This project does not grant additional rights to the recordings; contact Words.hk
+for permission for uses beyond the original grant.

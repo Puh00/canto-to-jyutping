@@ -1,7 +1,7 @@
 import type { Annotation } from '../pronunciation/types';
 import syllables from './syllables.json';
 
-export const AUDIO_BASE = 'https://raw.githubusercontent.com/AlienKevin/wordshk_app/1571375f5daceab45d0393ac5a1a72b6a47067c0/assets/jyutping_female/';
+export const AUDIO_BASE = `${import.meta.env.BASE_URL}audio/wordshk-202207/`;
 const available = new Set(syllables);
 export const hasAudio = (reading: string | null) => reading !== null && available.has(reading);
 export type Clip = { start: number; reading: string };

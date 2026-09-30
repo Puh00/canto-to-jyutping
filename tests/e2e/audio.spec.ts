@@ -17,7 +17,7 @@ function audioFixture(seconds = 1) {
 }
 async function stubAudio(page: Page) {
   const requests: string[] = [];
-  await page.route('https://raw.githubusercontent.com/**/jyutping_female/*.mp3', async route => {
+  await page.route('**/audio/wordshk-202207/*.mp3', async route => {
     requests.push(route.request().url());
     await route.fulfill({ contentType: 'audio/wav', headers: { 'access-control-allow-origin': '*' }, body: audioFixture() });
   });
@@ -26,7 +26,7 @@ async function stubAudio(page: Page) {
 
 test('plays occurrences in order, pauses the current character, and finishes without moving focus', async ({ page }) => {
   const requests = await stubAudio(page);
-  await page.goto('/');
+  await page.goto(process.env.PAGES_URL ?? '/');
   await page.getByRole('textbox', { name: 'Cantonese text' }).fill('你好你');
   expect(requests).toHaveLength(0);
   const output = page.getByRole('region', { name: 'Jyutping' });
@@ -66,7 +66,7 @@ test('plays occurrences in order, pauses the current character, and finishes wit
 
 test('stops on edits, mode changes and pronunciation inspection; disables unsupported text', async ({ page }) => {
   await stubAudio(page);
-  await page.goto('/');
+  await page.goto(process.env.PAGES_URL ?? '/');
   const input = page.getByRole('textbox', { name: 'Cantonese text' });
   const play = page.getByRole('button', { name: 'Read aloud', exact: true });
   await input.fill('銀行行行');
@@ -89,10 +89,10 @@ test('stops on edits, mode changes and pronunciation inspection; disables unsupp
 
 test('reports a failed audio request and retries without stale highlights', async ({ page }) => {
   let fail = true;
-  await page.route('https://raw.githubusercontent.com/**/jyutping_female/*.mp3', route => route.fulfill({
+  await page.route('**/audio/wordshk-202207/*.mp3', route => route.fulfill({
     status: fail ? 503 : 200, contentType: 'audio/wav', headers: { 'access-control-allow-origin': '*' }, body: fail ? '' : audioFixture(),
   }));
-  await page.goto('/');
+  await page.goto(process.env.PAGES_URL ?? '/');
   await page.getByRole('textbox', { name: 'Cantonese text' }).fill('你');
   await page.getByRole('button', { name: 'Read aloud', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('Audio could not play');
@@ -107,7 +107,7 @@ test('reports a failed audio request and retries without stale highlights', asyn
 test('explains unsupported audio without attempting network access', async ({ page }) => {
   await page.addInitScript(() => { Object.defineProperty(window, 'AudioContext', { value: undefined, configurable: true }); });
   const requests = await stubAudio(page);
-  await page.goto('/');
+  await page.goto(process.env.PAGES_URL ?? '/');
   await page.getByRole('textbox', { name: 'Cantonese text' }).fill('你');
   await page.getByRole('button', { name: 'Read aloud', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('not supported in this browser');
@@ -117,7 +117,7 @@ test('explains unsupported audio without attempting network access', async ({ pa
 test('photo playback highlights transcription and stops when editing the photo', async ({ page }) => {
   test.setTimeout(120_000);
   await stubAudio(page);
-  await page.goto('/');
+  await page.goto(process.env.PAGES_URL ?? '/');
   await page.getByRole('button', { name: 'Read a photo', exact: true }).click();
   await page.getByLabel('Choose an image', { exact: true }).setInputFiles(path.resolve('tests/fixtures/menu-clean.png'));
   await page.getByRole('button', { name: 'Read whole image', exact: true }).click();
@@ -146,7 +146,7 @@ test('photo playback highlights transcription and stops when editing the photo',
 
 test('character targets replace playing and paused sequences; alternatives remain independent', async ({ page }) => {
   await stubAudio(page);
-  await page.goto('/');
+  await page.goto(process.env.PAGES_URL ?? '/');
   const input = page.getByRole('textbox', { name: 'Cantonese text' });
   await input.fill('銀行你你');
   const output = page.getByRole('region', { name: 'Jyutping' });
@@ -191,10 +191,10 @@ test('character targets replace playing and paused sequences; alternatives remai
 
 test('single character and dialog failures can be retried', async ({ page }) => {
   let fail = true;
-  await page.route('https://raw.githubusercontent.com/**/jyutping_female/*.mp3', route => route.fulfill({
+  await page.route('**/audio/wordshk-202207/*.mp3', route => route.fulfill({
     status: fail ? 503 : 200, contentType: 'audio/wav', body: fail ? '' : audioFixture(),
   }));
-  await page.goto('/');
+  await page.goto(process.env.PAGES_URL ?? '/');
   await page.getByRole('textbox', { name: 'Cantonese text' }).fill('銀行𠀀');
   await expect(page.getByRole('button', { name: '𠀀. Audio unavailable' })).toBeDisabled();
   const character = page.getByRole('button', { name: '行, hong4. Play pronunciation', exact: true });
