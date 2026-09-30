@@ -25,11 +25,12 @@ export function App() {
           <button type="button" aria-pressed={mode === 'text'} onClick={() => setMode('text')}>Read text</button>
           <button type="button" aria-pressed={mode === 'photo'} onClick={() => setMode('photo')}>Read a photo</button>
         </nav>
-        <div hidden={mode !== 'text'}><Reader /></div>
+        <div hidden={mode !== 'text'}><Reader active={mode === 'text'} /></div>
         {mode === 'photo' && <PhotoReader />}
       </main>
       <footer className="site-footer">
-        <span>Text and photos are processed on your device.</span>
+        <span>Text and photos are processed on your device. Audio loads from this site when played.</span>
+        <a href="./audio-permission.txt">Audio: <span lang="zh-Hant">林璃蝶</span> / Indicum Lam · Non-commercial use only</a>
         <a href="./notices.txt">Built with ToJyutping <span aria-hidden="true">↗</span></a>
       </footer>
     </div>

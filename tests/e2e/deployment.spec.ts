@@ -1,6 +1,39 @@
 import { expect, test } from '@playwright/test';
 
 const siteUrl = process.env.PAGES_URL;
+test('original audio plays from the published subpath with its permission notice', async ({ page }) => {
+  test.skip(!siteUrl, 'Set PAGES_URL to test a Pages build');
+  await page.goto(siteUrl!);
+  const audioRequests: string[] = [];
+  page.on('request', request => { if (request.url().endsWith('.mp3')) audioRequests.push(request.url()); });
+  await page.getByRole('textbox', { name: 'Cantonese text' }).fill('你好');
+  expect(audioRequests).toEqual([]);
+  const nativeAudio = await page.evaluate(() => typeof AudioContext !== 'undefined');
+  test.skip(!nativeAudio, 'This browser build lacks Web Audio; real MP3 decoding requires a native audio implementation');
+  // Decode actual shipped MP3s rather than the silence fixtures used by UI tests.
+  const durations = await page.evaluate(async base => {
+    const context = new AudioContext();
+    try {
+      return await Promise.all(['nei5', 'hou2'].map(async reading => {
+        const response = await fetch(new URL(`audio/wordshk-202207/${reading}.mp3`, base));
+        if (!response.ok) throw new Error('Recording could not load');
+        return (await context.decodeAudioData(await response.arrayBuffer())).duration;
+      }));
+    } finally { await context.close(); }
+  }, siteUrl!);
+  expect(durations.every(duration => duration > 0)).toBe(true);
+  audioRequests.length = 0;
+  await page.getByRole('button', { name: 'Read aloud', exact: true }).click();
+  await expect.poll(() => audioRequests.length).toBe(2);
+  await expect(page.getByRole('button', { name: 'Read aloud', exact: true })).toBeVisible();
+  await expect(page.getByRole('alert')).toHaveCount(0);
+  expect(audioRequests.sort()).toEqual(['hou2', 'nei5'].map(reading =>
+    new URL(`audio/wordshk-202207/${reading}.mp3`, siteUrl!).href).sort());
+  await page.getByRole('link', { name: /Audio:.*Indicum Lam/ }).click();
+  await expect(page).toHaveURL(new URL('audio-permission.txt', siteUrl!).href);
+  await expect(page.locator('body')).toContainText('Non-commercial use only.');
+});
+
 test('published subpath loads text, theme switch and local photo recognition', async ({ page, context }) => {
   test.skip(!siteUrl, 'Set PAGES_URL to test a local or published Pages build');
   test.setTimeout(180_000);

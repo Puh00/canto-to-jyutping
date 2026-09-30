@@ -43,11 +43,6 @@
   .clear { min-height: 44px; }
 }
 
-.interactive { background: transparent; border: 0; color: inherit; font-family: inherit; }
-.interactive .reading { text-decoration: underline dotted currentColor; text-underline-offset: 5px; }
-.interactive:hover { background: var(--hover); }
-.interactive:focus-visible { outline-offset: 0; }
-.missing .reading { color: var(--accent); }
 .readingHint { color: var(--muted); font-size: 12px; margin: 13px 0 0; line-height: 1.6; }
 .dialog { width: min(420px, calc(100% - 32px)); max-height: calc(100dvh - 48px); overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 26px; background: var(--surface); color: var(--ink); box-shadow: 0 24px 80px var(--dialog-shadow); }
 .dialog::backdrop { background: var(--backdrop); backdrop-filter: blur(3px); }
@@ -56,9 +51,20 @@
 .dialogHeader h2 span { font-family: var(--cjk); }
 .closeDialog { width: 40px; height: 40px; border: 1px solid var(--line); background: transparent; border-radius: 50%; font-size: 25px; color: var(--muted); flex-shrink: 0; }
 .detailLabel { font-size: 9px; color: var(--muted); letter-spacing: 1.6px; margin: 20px 0 10px; }
-.chosenReading { display: inline-block; margin: 0; padding: 10px 16px; border-radius: 8px; background: var(--soft-green); color: var(--green); font-size: 23px; }
+.chosenReading { display: inline-block; margin: 0; padding: 0; border-radius: 8px; background: var(--soft-green); color: var(--green); font-size: 23px; }
 .alternativeList { display: flex; flex-wrap: wrap; gap: 8px; list-style: none; padding: 0; margin: 0; }
-.alternativeList li { border: 1px solid var(--line); border-radius: 7px; padding: 8px 11px; font-size: 15px; }
+.alternativeList li { font-size: 15px; }
 .dialogNote { font-size: 12px; line-height: 1.7; color: var(--muted); margin: 25px 0 0; }
 .missingDetail { text-align: center; }
+.token.playing { background: var(--soft-green); outline: 2px solid var(--green); outline-offset: -2px; }
 .largeCharacter { font: 46px var(--cjk); margin: 0; }
+
+.characterButton, .readingButton { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 3px; border: 0; border-radius: 4px; background: transparent; color: inherit; }
+.characterButton { font-family: inherit; }
+.characterButton:disabled { cursor: default; }
+.characterButton:hover:not(:disabled), .readingButton:hover { background: var(--hover); }
+.token > .reading { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; margin-top: 0; }
+.readingButton { color: var(--green); text-decoration: underline dotted; text-underline-offset: 5px; }
+.readingButton.missing { color: var(--accent); }
+.readingAudio { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; min-width: 44px; border: 1px solid var(--line); border-radius: 7px; padding: 8px 11px; background: transparent; color: inherit; font: inherit; }
+.readingAudio[data-audio-playing] { background: var(--soft-green); outline: 2px solid var(--green); }

@@ -1,19 +1,20 @@
 # Cantonese Reader
 
-Cantonese Reader helps people who speak Cantonese but find traditional Chinese characters hard to read. It is a mobile-friendly, static website for reading pasted text or words selected from a photo. The app shows Jyutping beneath the original characters. Menus and signs are the main use cases. See [README.md](README.md) for the user-facing description.
+Cantonese Reader helps people who speak Cantonese but find traditional Chinese characters hard to read. It is a mobile-friendly, static website for reading pasted text or words selected from a photo. The app shows Jyutping beneath the original characters and can play their pronunciations. Menus and signs are the main use cases. See [README.md](README.md) for the user-facing description.
 
 ## Code map
 
 - React, TypeScript, Vite and CSS Modules make up the site. GitHub Pages publishes the `dist/` build through [.github/workflows/pages.yml](.github/workflows/pages.yml).
 - `src/pronunciation/` calls ToJyutping on the whole input so word context can affect readings. `src/features/reader/` displays and inspects those readings.
 - `src/features/photo/` owns photo selection, highlighting and the reading flow. `src/ocr/` runs PaddleOCR in the browser. OCR models and the ONNX runtime are prepared by `scripts/prepare-ocr.mjs`; generated `public/ocr/` assets are ignored by Git.
+- `src/audio/` plays the original Words.hk recordings from `public/audio/wordshk-202207/`, fetched on demand from this site using Vite's base path. Preserve the original bytes and `scripts/audio-assets.json` checksums. Audio requests reveal syllable filenames to the site host; text and photos are processed on the user's device.
 
 ## Preserve these behaviors
 
 - Keep the entered or recognized wording intact. Attach each Jyutping reading to its original character, including Unicode variation selectors and combining marks. Preserve punctuation, English, prices and line breaks. Show uncertainty or missing readings rather than inventing them.
 - Convert whole text for context, then align results to source positions. OCR errors and pronunciation errors are separate problems; inspect the right stage before changing either one.
 - Keep photo recognition and pronunciation conversion in the browser. Highlighted-photo recognition reads only painted areas, with an explicit whole-image action. Discuss any backend or image upload with the user before adding it.
-- Preserve [public/notices.txt](public/notices.txt) in the published site when changing dependencies or assets.
+- Preserve [public/notices.txt](public/notices.txt) and [public/audio-permission.txt](public/audio-permission.txt) in the published site when changing dependencies or assets. Words.hk granted permission for this project's non-commercial use of the recordings, credited to 林璃蝶 / Indicum Lam. The recordings must remain outside any open-source license for the code and cannot be sublicensed under one. Do not infer wider audio rights from the words.hk app's software license or its text-data terms.
 
 ## Check and ship changes
 

@@ -1,0 +1,7 @@
+.playback { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px 10px; padding: 6px 0; font: 12px/1.5 var(--sans); }
+.buttons { display: flex; gap: 8px; }
+.buttons button { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 1px solid var(--control-border); border-radius: 7px; background: var(--surface); color: var(--green); font: inherit; }
+.buttons button:hover:not(:disabled) { background: var(--hover); }
+.buttons button:disabled { opacity: .5; cursor: default; }
+.message { color: var(--muted); max-width: 36ch; }
+.message:empty { display: none; }

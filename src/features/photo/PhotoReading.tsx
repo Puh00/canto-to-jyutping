@@ -8,12 +8,15 @@ import { AnnotatedText } from '../reader/AnnotatedText';
 import { PronunciationDetails } from '../reader/PronunciationDetails';
 import styles from './photo.module.css';
 import { HighlightStrokes } from './HighlightStrokes';
+import { usePlayback } from '../../audio/usePlayback';
+import { PlaybackControls } from '../../audio/PlaybackControls';
 
 type Props = { text: string; image: OpenedImage; crop: PhotoCrop; strokes: readonly HighlightStroke[];
-  onEdit: (trigger: HTMLButtonElement) => void; disabled: boolean; actions: ReactNode; notice: ReactNode };
+  onEdit: (trigger: HTMLButtonElement) => void; disabled: boolean; audioEnabled?: boolean; actions: ReactNode; notice: ReactNode };
 
-export function PhotoReading({ text, image, crop, strokes, onEdit, disabled, actions, notice }: Props) {
+export function PhotoReading({ text, image, crop, strokes, onEdit, disabled, audioEnabled = true, actions, notice }: Props) {
   const tokens = useMemo(() => annotate(text), [text]);
+  const playback = usePlayback(tokens, audioEnabled);
   const [selected, setSelected] = useState<Annotation | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const preview = useRef<HTMLButtonElement>(null);
@@ -44,7 +47,7 @@ export function PhotoReading({ text, image, crop, strokes, onEdit, disabled, act
     {notice}
     <div className={styles.comparison}>
       <button ref={preview} type="button" className={styles.sourcePhoto} aria-label="Edit highlights in photo" disabled={disabled}
-        onClick={event => onEdit(event.currentTarget)}>
+        onClick={event => { playback.stop(); onEdit(event.currentTarget); }}>
         <svg className={styles.sourceImage} viewBox={`${crop.left} ${crop.top} ${crop.width} ${crop.height}`}
           width={crop.width} height={crop.height} role="img" aria-label="Photo used for this reading">
           <rect x={crop.left} y={crop.top} width={crop.width} height={crop.height} fill="#fff" />
@@ -54,9 +57,10 @@ export function PhotoReading({ text, image, crop, strokes, onEdit, disabled, act
         <span className={styles.sourceLabel}>Edit highlights</span>
       </button>
       <div className={styles.transcription} onFocusCapture={revealFocusedReading}>
-        <AnnotatedText tokens={tokens} onInspect={setSelected} />
-        {tokens.some(token => token.kind === 'han' && token.alternatives.length > 0) && <p className={styles.hint}>Tap an underlined reading to see alternatives.</p>}
-        {selected && <PronunciationDetails token={selected} onClose={() => setSelected(null)} />}
+        <PlaybackControls playback={playback} />
+        <AnnotatedText tokens={tokens} onInspect={token => { playback.stop(); setSelected(token); }} activeStart={selected ? null : playback.activeStart} onPlay={playback.playReading} canPlayReading={playback.canPlayReading} occlusionRef={preview} />
+        {tokens.some(token => token.kind === 'han') && <p className={styles.hint}>Tap a character to hear it. Tap an underlined reading for alternatives.</p>}
+        {selected && <PronunciationDetails token={selected} playback={playback} onClose={() => { playback.stop(); setSelected(null); }} />}
         <p className={styles.hint}>Suggested readings may be incorrect.</p>
       </div>
     </div>
