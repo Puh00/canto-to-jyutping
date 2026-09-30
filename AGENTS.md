@@ -1,6 +1,6 @@
-# Canto
+# Cantonese Reader
 
-Canto helps people who speak Cantonese but find traditional Chinese characters hard to read. It is a mobile-friendly, static website for reading pasted text or words selected from a photo. The app shows Jyutping beneath the original characters and can play their pronunciations. Menus and signs are the main use cases. See [README.md](README.md) for the user-facing description.
+Cantonese Reader helps people who speak Cantonese but find traditional Chinese characters hard to read. It is a mobile-friendly, static website for reading pasted text or words selected from a photo. The app shows Jyutping beneath the original characters and can play their pronunciations. Menus and signs are the main use cases. See [README.md](README.md) for the user-facing description.
 
 ## Code map
 
