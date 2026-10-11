@@ -6,6 +6,10 @@ Use the app at [puh00.github.io/canto-to-jyutping](https://puh00.github.io/canto
 
 Photo recognition runs in your browser. The first scan downloads the OCR models.
 
+Long-press and drag on the original characters to select text, then choose Copy from your browser's menu.
+On a computer, drag to select and use Copy or Ctrl+C / Cmd+C.
+Copied text preserves the selected wording and line breaks without Jyutping, in both photo and text readings.
+
 Choose **Read aloud** to hear the displayed Jyutping one character at a time, with the current character highlighted. Pause, resume, or stop playback in either reading mode. Characters without available audio are skipped; English text and numbers are not spoken.
 
 Tap a character to hear its suggested pronunciation. Tap an underlined Jyutping reading to open alternatives, then tap a reading to compare its sound without changing the text. A character tap stops any full-text sequence; Read aloud restarts from the beginning.

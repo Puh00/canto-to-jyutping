@@ -35,7 +35,7 @@ export function Reader({ active = true }: { active?: boolean }) {
             {hasText && <PlaybackControls playback={playback} />}
           </div>
           <div className={styles.outputBody}>
-            {hasText ? <><AnnotatedText tokens={tokens} onInspect={inspect} activeStart={selected ? null : playback.activeStart} onPlay={playback.playReading} canPlayReading={playback.canPlayReading} />{hasReadings && <p className={styles.readingHint}>Tap a character to hear it. Tap an underlined reading for alternatives.</p>}</> : (
+            {hasText ? <><AnnotatedText tokens={tokens} onInspect={inspect} activeStart={selected ? null : playback.activeStart} onPlay={playback.playReading} canPlayReading={playback.canPlayReading} />{hasReadings && <p className={styles.readingHint}>Tap a character to hear it. Tap an underlined reading for alternatives. Long-press or drag across the characters to select and copy text.</p>}</> : (
               <div className={styles.empty}>
                 <div className={styles.exampleCharacters} aria-hidden="true">
                   <span>你<small>nei5</small></span><span>好<small>hou2</small></span>

@@ -60,9 +60,12 @@
 .largeCharacter { font: 46px var(--cjk); margin: 0; }
 
 .characterButton, .readingButton { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; padding: 0 3px; border: 0; border-radius: 4px; background: transparent; color: inherit; }
-.characterButton { font-family: inherit; }
-.characterButton:disabled { cursor: default; }
-.characterButton:hover:not(:disabled), .readingButton:hover { background: var(--hover); }
+.characterButton { font-family: inherit; cursor: pointer; }
+.characterButton[aria-disabled="true"] { cursor: text; }
+.characterButton:hover:not([aria-disabled="true"]), .readingButton:hover { background: var(--hover); }
+.annotations, .characterButton, .character, .plain { -webkit-user-select: text; user-select: text; }
+.reading { -webkit-user-select: none; user-select: none; }
+.characterButton:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 .token > .reading { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; margin-top: 0; }
 .readingButton { color: var(--green); text-decoration: underline dotted; text-underline-offset: 5px; }
 .readingButton.missing { color: var(--accent); }

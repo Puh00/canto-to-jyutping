@@ -59,7 +59,7 @@ export function PhotoReading({ text, image, crop, strokes, onEdit, disabled, aud
       <div className={styles.transcription} onFocusCapture={revealFocusedReading}>
         <PlaybackControls playback={playback} />
         <AnnotatedText tokens={tokens} onInspect={token => { playback.stop(); setSelected(token); }} activeStart={selected ? null : playback.activeStart} onPlay={playback.playReading} canPlayReading={playback.canPlayReading} occlusionRef={preview} />
-        {tokens.some(token => token.kind === 'han') && <p className={styles.hint}>Tap a character to hear it. Tap an underlined reading for alternatives.</p>}
+        {tokens.some(token => token.kind === 'han') && <p className={styles.hint}>Tap a character to hear it. Tap an underlined reading for alternatives. Long-press or drag across the characters to select and copy text.</p>}
         {selected && <PronunciationDetails token={selected} playback={playback} onClose={() => { playback.stop(); setSelected(null); }} />}
         <p className={styles.hint}>Suggested readings may be incorrect.</p>
       </div>
